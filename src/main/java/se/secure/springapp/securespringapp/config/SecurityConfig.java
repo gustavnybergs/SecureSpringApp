@@ -19,6 +19,8 @@ import java.time.Duration;
  * Säkerhetskonfiguration för applikationen
  * Implementerar rollbaserad åtkomstkontroll och säkerhetsheaders
  * JWT-autentisering läggs till av Utvecklare 1
+ *
+ * Utvecklare 3: Uppdaterad för Swagger-dokumentation enligt User Story #39
  */
 @Configuration
 @EnableWebSecurity
@@ -36,6 +38,7 @@ public class SecurityConfig {
     /*
      * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler och säkerhetsheaders
      * JWT-filter läggs till senare av Utvecklare 1
+     * Swagger-endpoints tillåtna för alla användare
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -78,6 +81,8 @@ public class SecurityConfig {
 
                         // Swagger dokumentation - tillgänglig för alla
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
+                        .requestMatchers("/swagger-ui/index.html", "/swagger-ui/favicon-32x32.png").permitAll()
 
                         // USER endpoints - kräver USER eller ADMIN roll
                         .requestMatchers("/api/user/**").hasAnyAuthority("USER", "ADMIN")
