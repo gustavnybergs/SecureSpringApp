@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 /**
- * Standard struktur för alla felmeddelanden som skickas till klienten
- * Håller konsekvent format så frontend kan hantera fel på samma sätt
- * Innehåller timestamp, status, meddelande och path för felet
+ * DTO-klass för att representera felmeddelanden i API-svar.
+ * Jag gjorde denna för att ha ett konsekvent format för alla fel som
+ * returneras från vårt API. Innehåller status, meddelande och tidsstämpel.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 
 public class ErrorResponse {
@@ -19,13 +23,19 @@ public class ErrorResponse {
     private String message;
     private String path;
 
-    // Tom konstruktor för Jackson
+    /**
+     * Standardkonstruktor som sätter tidsstämpel automatiskt.
+     */
     public ErrorResponse() {
         this.timestamp = LocalDateTime.now();
     }
 
     /**
-     * Huvudkonstruktor som vi använder i våra exception handlers.
+     * Konstruktor för att skapa komplett felsvar med alla detaljer.
+     *
+     * @param status HTTP-statuskod (t.ex. 404, 500)
+     * @param message felmeddelande för användaren
+     * @param error felkod för att identifiera typen av fel
      */
     public ErrorResponse(int status, String error, String message, String path) {
         this();

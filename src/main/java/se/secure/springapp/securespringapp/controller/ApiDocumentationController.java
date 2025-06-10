@@ -12,14 +12,29 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * Controller för API-dokumentation och hälsokontroller
- * Tillhandahåller information om API:ets status och dokumentation
+ * Controller för API-dokumentation och grundläggande systemkontroller.
+ * Jag skapade denna för User Story #5 (39 enligt github commit) eftersom vi behövde enkla endpoints
+ * som visar att API:et fungerar och ger information om dokumentationen.
+ *
+ * Dessa endpoints är publika så utvecklare kan snabbt kolla systemstatus
+ * och hitta dokumentationen utan att behöva autentisera sig först.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @RestController
 @RequestMapping("/api/public")
 @Tag(name = "API Information", description = "Endpoints för API-status och dokumentation")
 public class ApiDocumentationController {
 
+    /**
+     * Enkel hälsokontroll som visar att API:et är igång och fungerar.
+     * Jag använder detta när jag utvecklar för att snabbt se att servern startade rätt.
+     * Returnerar grundläggande systeminfo utan känsliga detaljer.
+     *
+     * @return ResponseEntity med systemstatus och grundläggande information
+     */
     @Operation(
             summary = "API hälsokontroll",
             description = "Kontrollerar att API:et är igång och fungerar korrekt."
@@ -36,6 +51,13 @@ public class ApiDocumentationController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Returnerar översikt över API:et och var man hittar dokumentationen.
+     * Praktiskt för nya utvecklare som ska förstå hur vårt API är uppbyggt
+     * och vilka endpoints som finns tillgängliga.
+     *
+     * @return ResponseEntity med API-metadata och länkstrukturen
+     */
     @Operation(
             summary = "API-information",
             description = "Returnerar information om API:et inklusive tillgängliga endpoints och dokumentation."
@@ -62,6 +84,13 @@ public class ApiDocumentationController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Dolt endpoint som omdirigerar till Swagger UI.
+     * Jag hade detta som backup ifall någon skulle leta efter dokumentation
+     * på fel ställe. @Hidden gör att det inte syns i Swagger-dokumentationen.
+     *
+     * @return ResponseEntity med omdirigeringsinformation till Swagger UI
+     */
     @Hidden  // Dölj detta endpoint från Swagger UI
     @GetMapping("/swagger-redirect")
     public ResponseEntity<Map<String, String>> swaggerRedirect() {

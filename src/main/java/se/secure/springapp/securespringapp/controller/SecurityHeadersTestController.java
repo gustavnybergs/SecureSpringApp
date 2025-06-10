@@ -8,18 +8,28 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * Controller för att testa att säkerhetsheaders sätts korrekt
- * Returnerar info om vilka headers som borde finnas
- * Använd browser dev tools för att verifiera att headers finns
+/**
+ * Test-controller för att verifiera att våra säkerhetsheaders fungerar korrekt.
+ * Jag skapade denna för User Story #4 (35 enligt github commit) så vi enkelt kan kontrollera att
+ * SecurityHeadersFilter lägger till rätt headers på alla HTTP-svar.
+ *
+ * Använd browser dev tools (F12 -> Network) för att se att headers som
+ * X-Frame-Options, CSP och andra säkerhetsheaders faktiskt sätts.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @RestController
 @RequestMapping("/api/public/security-test")
 public class SecurityHeadersTestController {
 
-    /*
-     * Endpoint för att testa säkerhetsheaders
-     * Öppna denna i browser och kolla Network tab för att se headers
+    /**
+     * Endpoint för att testa att säkerhetsheaders sätts korrekt.
+     * Öppna detta i webbläsaren och kolla Network tab i dev tools
+     * för att verifiera att vårt SecurityHeadersFilter fungerar som det ska.
+     *
+     * @return ResponseEntity med instruktioner för hur man kontrollerar headers
      */
     @GetMapping("/headers")
     public ResponseEntity<Map<String, String>> testHeaders() {
@@ -32,10 +42,12 @@ public class SecurityHeadersTestController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Test för CSP (Content Security Policy)
-     * Denna endpoint returnerar HTML som försöker ladda externa scripts
-     * Om CSP fungerar ska externa scripts blockeras
+    /**
+     * Testar Content Security Policy genom att returnera HTML med scripts.
+     * Om CSP fungerar ska externa scripts blockeras och fel visas i console.
+     * Praktiskt för att demo att våra säkerhetsheaders faktiskt skyddar mot XSS.
+     *
+     * @return ResponseEntity med HTML som testar CSP-regler
      */
     @GetMapping("/csp-test")
     public ResponseEntity<String> testCSP() {

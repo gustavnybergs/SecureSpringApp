@@ -7,7 +7,19 @@ import java.util.Set;
 
 /**
  * JPA-entitet som representerar en användare i systemet.
- * Hanterar autentisering och rollbaserade behörigheter.
+ * Jag skapade denna så vi kan lagra användardata säkert
+ * i databasen och hantera autentisering samt rollbaserade behörigheter.
+ *
+ * Varje användare har ett unikt användarnamn, hashat lösenord och en uppsättning
+ * roller som bestämmer vad de får göra i systemet. Eager loading av roller
+ * säkerställer att säkerhetskontroller alltid har tillgång till aktuella behörigheter.
+ *
+ * Lösenord ska alltid hashas med BCrypt innan de sparas - detta görs av
+ * AuthService som Utvecklare 1 implementerar.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @Entity
 @Table(name = "users")
@@ -27,7 +39,10 @@ public class User {
 
     /**
      * Set med roller som användaren har.
-     * Eager loading för att alltid ha tillgång till roller vid säkerhetskontroller.
+     * Eager loading säkerställer att roller alltid laddas när User hämtas,
+     * vilket är viktigt för säkerhetskontroller som inte kan vänta på lazy loading.
+     *
+     * Rollerna lagras i separat tabell (user_roles) för normalisering.
      */
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
@@ -38,15 +53,20 @@ public class User {
     @Column(name = "consent_given", nullable = false)
     private boolean consentGiven = false;
 
-    // Konstruktorer
+    /**
+     * Standard konstruktor för JPA.
+     * Krävs av Hibernate för att skapa entiteter från databasrader.
+     */
     public User() {
         // Tom konstruktor för JPA
     }
 
     /**
      * Skapar en ny användare med grundläggande USER-roll.
-     * @param username användarnamnet
-     * @param password lösenordet (bör vara hashat innan detta anrop)
+     * Använd denna konstruktor när du registrerar nya användare.
+     *
+     * @param username användarnamnet (måste vara unikt)
+     * @param password lösenordet (bör vara hashat med BCrypt innan detta anrop)
      */
     public User(String username, String password) {
         this.username = username;
@@ -54,24 +74,100 @@ public class User {
         this.roles.add(Role.USER); // Alla nya användare får USER-rollen som standard
     }
 
-    // Getters och setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public Set<Role> getRoles() { return roles; }
-    public void setRoles(Set<Role> roles) { this.roles = roles; }
-
-    public boolean isConsentGiven() { return consentGiven; }
-    public void setConsentGiven(boolean consentGiven) { this.consentGiven = consentGiven; }
+    /**
+     * Hämtar användarens unika ID från databasen.
+     *
+     * @return användar-ID som Long, eller null för nya användare
+     */
+    public Long getId() {
+        return id;
+    }
 
     /**
-     * Lägger till en roll för användaren.
+     * Sätter användarens ID (används normalt bara av JPA).
+     *
+     * @param id det nya användar-ID:t
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    /**
+     * Hämtar användarens unika användarnamn.
+     *
+     * @return användarnamnet som String
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * Sätter användarens användarnamn.
+     *
+     * @param username det nya användarnamnet (måste vara unikt)
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Hämtar användarens hashade lösenord.
+     *
+     * @return det hashade lösenordet som String
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Sätter användarens lösenord.
+     *
+     * @param password det nya lösenordet (bör vara hashat med BCrypt)
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * Hämtar alla roller som användaren har.
+     *
+     * @return en Set med Role-enums som användaren har behörighet för
+     */
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    /**
+     * Sätter alla roller för användaren.
+     *
+     * @param roles en Set med nya roller
+     */
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    /**
+     * Kontrollerar om användaren har gett sitt samtycke.
+     *
+     * @return true om samtycke är givet, false annars
+     */
+    public boolean isConsentGiven() {
+        return consentGiven;
+    }
+
+    /**
+     * Sätter användarens samtyckesstatus.
+     *
+     * @param consentGiven true om användaren ger sitt samtycke
+     */
+    public void setConsentGiven(boolean consentGiven) {
+        this.consentGiven = consentGiven;
+    }
+
+    /**
+     * Lägger till en ny roll för användaren.
+     * Praktisk metod för att utöka användarens behörigheter.
+     *
      * @param role rollen som ska läggas till
      */
     public void addRole(Role role) {
@@ -80,6 +176,8 @@ public class User {
 
     /**
      * Tar bort en roll från användaren.
+     * Praktisk metod för att minska användarens behörigheter.
+     *
      * @param role rollen som ska tas bort
      */
     public void removeRole(Role role) {
@@ -88,6 +186,8 @@ public class User {
 
     /**
      * Kontrollerar om användaren har en specifik roll.
+     * Användbar för manuella behörighetskontroller i business logic.
+     *
      * @param role rollen som ska kontrolleras
      * @return true om användaren har rollen, false annars
      */

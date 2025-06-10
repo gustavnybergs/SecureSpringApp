@@ -10,9 +10,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
- * Test-controller för att prova säkerhetsloggning
- * Simulerar olika säkerhetshändelser för att testa att loggning fungerar
+/**
+ * Test-controller för att prova och demo våra säkerhetsloggningsfunktioner.
+ * Jag skapade denna för User Story #7 (37 enligt github commit) så vi kan simulera olika säkerhetshändelser
+ * och verifiera att SecurityEventLogger fungerar som den ska.
+ *
+ * Använd dessa endpoints för att generera testdata i loggarna och se
+ * att säkerhetsövervakning fungerar korrekt innan vi går live.
+ *
+ * TODO: Väntar på att Utvecklare 2 implementerar SecurityEventLogger
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @RestController
 @RequestMapping("/api/public/security-log-test")
@@ -25,8 +35,16 @@ public class SecurityLoggingTestController {
         this.securityEventLogger = securityEventLogger;
     }
 
-    /*
-     * Testar loggning av lyckad inloggning
+    /**
+     * Simulerar en lyckad inloggning för att testa säkerhetsloggning.
+     * Kör detta och kolla sedan loggfilerna för att se att händelsen
+     * loggades korrekt med rätt format och alla nödvändiga detaljer.
+     *
+     * TODO: Implementeras av Utvecklare 2 - SecurityEventLogger saknas
+     *
+     * @param username användarnamn som ska loggas som inloggad
+     * @param request HTTP-request för att hämta IP-adress
+     * @return ResponseEntity med bekräftelse att loggning utfördes
      */
     @PostMapping("/test-login")
     public ResponseEntity<Map<String, String>> testLoginLog(
@@ -34,17 +52,28 @@ public class SecurityLoggingTestController {
             HttpServletRequest request) {
 
         String ipAddress = request.getRemoteAddr();
-        securityEventLogger.logSuccessfulLogin(username, ipAddress);
+        // TODO: Aktivera när Utvecklare 2 implementerat SecurityEventLogger
+        // securityEventLogger.logSuccessfulLogin(username, ipAddress);
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Lyckad inloggning loggad för " + username);
-        response.put("check", "Kolla loggarna för säkerhetshändelsen");
+        response.put("message", "Test endpoint för lyckad inloggning - väntar på SecurityEventLogger");
+        response.put("todo", "Utvecklare 2 ska implementera SecurityEventLogger");
+        response.put("username", username);
+        response.put("ipAddress", ipAddress);
 
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Testar loggning av misslyckad inloggning
+    /**
+     * Simulerar misslyckad inloggning för att testa säkerhetsloggning.
+     * Viktigt för att testa att vi kan upptäcka och logga potentiella
+     * säkerhetsattacker som brute-force eller felaktiga inloggningsförsök.
+     *
+     * TODO: Implementeras av Utvecklare 2 - SecurityEventLogger saknas
+     *
+     * @param username användarnamn för den misslyckade inloggningen
+     * @param request HTTP-request för IP-adress och kontext
+     * @return ResponseEntity med bekräftelse att säkerhetshändelsen loggades
      */
     @PostMapping("/test-failed-login")
     public ResponseEntity<Map<String, String>> testFailedLoginLog(
@@ -52,17 +81,28 @@ public class SecurityLoggingTestController {
             HttpServletRequest request) {
 
         String ipAddress = request.getRemoteAddr();
-        securityEventLogger.logFailedLogin(username, ipAddress, "Fel lösenord");
+        // TODO: Aktivera när Utvecklare 2 implementerat SecurityEventLogger
+        // securityEventLogger.logFailedLogin(username, ipAddress, "Fel lösenord");
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Misslyckad inloggning loggad för " + username);
-        response.put("check", "Kolla loggarna för säkerhetshändelsen");
+        response.put("message", "Test endpoint för misslyckad inloggning - väntar på SecurityEventLogger");
+        response.put("todo", "Utvecklare 2 ska implementera SecurityEventLogger");
+        response.put("username", username);
+        response.put("ipAddress", ipAddress);
 
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Testar loggning av misstänkt aktivitet
+    /**
+     * Simulerar misstänkt säkerhetsaktivitet för loggning.
+     * Använd detta för att testa att vi kan logga och spåra konstiga
+     * aktiviteter som kan indikera säkerhetsincidenter eller attacker.
+     *
+     * TODO: Implementeras av Utvecklare 2 - SecurityEventLogger saknas
+     *
+     * @param description beskrivning av den misstänkta aktiviteten
+     * @param request HTTP-request för säkerhetskontext
+     * @return ResponseEntity med bekräftelse att incidenten loggades
      */
     @PostMapping("/test-suspicious")
     public ResponseEntity<Map<String, String>> testSuspiciousLog(
@@ -70,18 +110,24 @@ public class SecurityLoggingTestController {
             HttpServletRequest request) {
 
         String ipAddress = request.getRemoteAddr();
-        securityEventLogger.logSuspiciousActivity(description, "test-user", ipAddress);
+        // TODO: Aktivera när Utvecklare 2 implementerat SecurityEventLogger
+        // securityEventLogger.logSuspiciousActivity(description, "test-user", ipAddress);
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Misstänkt aktivitet loggad: " + description);
-        response.put("check", "Kolla loggarna för säkerhetshändelsen");
+        response.put("message", "Test endpoint för misstänkt aktivitet - väntar på SecurityEventLogger");
+        response.put("todo", "Utvecklare 2 ska implementera SecurityEventLogger");
+        response.put("description", description);
+        response.put("ipAddress", ipAddress);
 
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Endpoint som kräver admin-roll för att testa åtkomstloggning
-     * Kommer loggas via AOP när den anropas
+    /**
+     * Skyddat endpoint som bara admins får komma åt.
+     * Detta testar både åtkomstkontroll och säkerhetsloggning samtidigt.
+     * När admin-användare kommer åt detta ska det loggas automatiskt.
+     *
+     * @return ResponseEntity med bekräftelse för admin-användare
      */
     @GetMapping("/admin-only")
     @PreAuthorize("hasAuthority('ADMIN')")

@@ -3,18 +3,26 @@ package se.secure.springapp.securespringapp.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import se.secure.springapp.securespringapp.filter.SecurityHeadersFilter;
 
-/*
- * Konfiguration för säkerhetsheaders som skyddar mot vanliga webbattacker
- * Implementerar headers för XSS-skydd, clickjacking-skydd, MIME-sniffing etc
- * Använder både Spring Security och manuella headers för maximal säkerhet
+/**
+ * Konfigurationsklass som registrerar vårt SecurityHeadersFilter.
+ * Jag behövde denna för att Spring Boot ska veta att vårt filter ska användas.
+ * Den kompletterar Spring Security:s inbyggda säkerhetsheaders med våra egna.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @Configuration
 public class SecurityHeadersConfig implements WebMvcConfigurer {
 
-    /*
-     * Filter som lägger till extra säkerhetsheaders på alla responses
-     * Kompletterar Spring Security's inbyggda headers
+    /**
+     * Registrerar SecurityHeadersFilter som en Spring Bean.
+     * När Spring Boot startar kommer den automatiskt att använda detta filter
+     * för alla HTTP-requests. Filtret lägger då till våra extra säkerhetsheaders.
+     *
+     * @return SecurityHeadersFilter-instans som Spring ska använda
      */
     @Bean
     public SecurityHeadersFilter securityHeadersFilter() {

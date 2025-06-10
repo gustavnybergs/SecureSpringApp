@@ -15,12 +15,17 @@ import java.time.Duration;
 // TODO: Lägg till UsernamePasswordAuthenticationFilter import när JWT implementeras
 // import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/*
- * Säkerhetskonfiguration för applikationen
- * Implementerar rollbaserad åtkomstkontroll och säkerhetsheaders
- * JWT-autentisering läggs till av Utvecklare 1
+/**
+ * Huvudkonfiguration för Spring Security i applikationen.
+ * Här definierar jag vilka endpoints som kräver autentisering, vilka roller
+ * som behövs för olika delar av API:et och vilka säkerhetsheaders som ska användas.
  *
- * Utvecklare 3: Uppdaterad för Swagger-dokumentation enligt User Story #39
+ * Jag förbereder även för JWT-autentisering som Utvecklare 1 ska implementera.
+ * Just nu är det mesta kommenterat bort tills JWT-delen är klar.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @Configuration
 @EnableWebSecurity
@@ -35,10 +40,16 @@ public class SecurityConfig {
     //     this.jwtAuthFilter = jwtAuthFilter;
     // }
 
-    /*
-     * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler och säkerhetsheaders
-     * JWT-filter läggs till senare av Utvecklare 1
-     * Swagger-endpoints tillåtna för alla användare
+    /**
+     * Konfigurerar säkerhetsfilterkedjan som avgör vem som får komma åt vad.
+     * Här sätter jag upp rollbaserad åtkomstkontroll och säkerhetsheaders.
+     *
+     * Publika endpoints (som Swagger och autentisering) får alla komma åt,
+     * medan admin-endpoints kräver ADMIN-roll och user-endpoints kräver USER eller ADMIN.
+     *
+     * @param http HttpSecurity-objekt för att konfigurera säkerhetsinställningar
+     * @return komplett SecurityFilterChain med all säkerhetskonfiguration
+     * @throws Exception om konfigurationen misslyckas av någon anledning
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -100,8 +111,12 @@ public class SecurityConfig {
                 .build();
     }
 
-    /*
-     * BCrypt lösenordskryptering - säker standard för lösenordshantering
+    /**
+     * Skapar BCrypt-lösenordskryptering för säker hantering av lösenord.
+     * BCrypt är branschstandard och mycket säkrare än att lagra lösenord i klartext.
+     * Den har inbyggt salt och kan konfigurera hur "dyr" krypteringen ska vara.
+     *
+     * @return PasswordEncoder med BCrypt-algoritm för lösenordshashing
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
