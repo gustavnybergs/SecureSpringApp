@@ -10,17 +10,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Test-controller för att prova våra felmeddelanden
- * Har endpoints som medvetet kastar olika typer av exceptions
- * Används för att verifiera att felhanteringen fungerar korrekt
- * Kan tas bort när riktiga controllers är implementerade
+ * Test-controller för att prova våra felhanteringsmeckanismer.
+ * Jag skapade denna för User Story #6 (38 enligt github commit) så vi kan
+ * testa att GlobalExceptionHandler fångar upp olika typer av
+ * fel och returnerar korrekta HTTP-statuskoder.
+ *
+ * Denna controller kan tas bort när riktiga controllers är implementerade,
+ * men den är jättebra för utveckling och testning av felhantering.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
 @RestController
 @RequestMapping("/api/test-errors")
 public class ErrorTestController {
 
     /**
-     * Kastar UserNotFoundException för att testa 404-hantering.
+     * Kastar medvetet UserNotFoundException för att testa 404-hantering.
+     * Använd detta för att verifiera att GlobalExceptionHandler fångar upp
+     * exception och returnerar korrekt 404-svar med vårt ErrorResponse-format.
+     *
+     * @return ResponseEntity (kommer aldrig returneras p.g.a. exception)
+     * @throws UserNotFoundException för att testa felhantering
      */
     @GetMapping("/user-not-found")
     public ResponseEntity<String> testUserNotFound() {

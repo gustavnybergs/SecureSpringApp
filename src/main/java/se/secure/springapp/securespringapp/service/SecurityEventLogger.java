@@ -2,125 +2,232 @@ package se.secure.springapp.securespringapp.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
+import org.slf4j.MDC;
+import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/*
- * Service för att logga säkerhetshändelser i applikationen
- * Centraliserad plats för all säkerhetsrelaterad loggning
- * Loggar inloggningar, misslyckade försök, behörighetsfel etc
+/**
+ * Komponent för säkerhetsloggning enligt projektets krav på User Story #7.
+ * Vi behövde en central plats för att logga alla säkerhetshändelser så jag
+ * skapade denna klass för att hantera det. Använder MDC för att strukturera
+ * loggdata vilket gör det lättare att analysera loggar senare.
+ *
+ * Jag valde att logga olika typer av händelser som autentisering, resursåtkomst
+ * och adminaktiviteter eftersom det var det som krävdes för projektet.
+ * Alla metoder kastar IllegalArgumentException om obligatoriska parametrar saknas.
+ *
+ * @author Utvecklare 3
+ * @version 1.0
+ * @since 2025-06-09
  */
-@Service
+@Component
 public class SecurityEventLogger {
 
-    private static final Logger logger = LoggerFactory.getLogger(SecurityEventLogger.class);
     private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY");
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /*
-     * Loggar lyckade inloggningar
-     * Sparar användarnamn och tidpunkt för granskning
+    /**
+     * Loggar när användare lyckas logga in.
+     * Jag tänkte att det är viktigt att spåra alla lyckade inloggningar
+     * för att kunna se normala användningsmönster i systemet.
+     *
+     * @param email vilken användare som loggade in
+     * @param ipAddress från vilken IP-adress
+     * @throws IllegalArgumentException om email eller ipAddress är null
      */
-    public void logSuccessfulLogin(String username, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("SUCCESSFUL_LOGIN - User: %s, IP: %s, Time: %s",
-                username, ipAddress, timestamp);
+    public void logSuccessfulAuthentication(String email, String ipAddress) {
+        if (email == null || ipAddress == null) {
+            throw new IllegalArgumentException("Email and IP address cannot be null");
+        }
 
-        securityLogger.info(message);
-        logger.info("Användare {} loggade in framgångsrikt från IP {}", username, ipAddress);
+        try {
+            MDC.put("eventType", "AUTH_SUCCESS");
+            MDC.put("userEmail", email);
+            MDC.put("ipAddress", ipAddress);
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.info("Lyckad inloggning för användare: {}", email);
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar misslyckade inloggningsförsök
-     * Viktigt för att upptäcka brute force-attacker
+    /**
+     * Loggar misslyckade inloggningsförsök.
+     * Detta är superviktigt för säkerheten - vi måste kunna se om någon
+     * försöker brute-force attack eller liknande mot vårt system.
+     *
+     * @param email vilken email som användes (kan vara null om ogiltigt)
+     * @param ipAddress från vilken IP
+     * @param reason varför det misslyckades
+     * @throws IllegalArgumentException om ipAddress eller reason är null
      */
-    public void logFailedLogin(String username, String ipAddress, String reason) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("FAILED_LOGIN - User: %s, IP: %s, Reason: %s, Time: %s",
-                username, ipAddress, reason, timestamp);
+    public void logFailedAuthentication(String email, String ipAddress, String reason) {
+        if (ipAddress == null || reason == null) {
+            throw new IllegalArgumentException("IP address and reason cannot be null");
+        }
 
-        securityLogger.warn(message);
-        logger.warn("Misslyckad inloggning för användare {} från IP {}: {}", username, ipAddress, reason);
+        try {
+            MDC.put("eventType", "AUTH_FAILURE");
+            MDC.put("userEmail", email != null ? email : "UNKNOWN");
+            MDC.put("ipAddress", ipAddress);
+            MDC.put("failureReason", reason);
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.warn("Misslyckad inloggning för email: {} - Orsak: {}",
+                    email != null ? email : "UNKNOWN", reason);
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar när användare försöker komma åt resurser de inte har tillgång till
-     * Hjälper att upptäcka privilege escalation-försök
+    /**
+     * Loggar när användare kommer åt skyddade resurser.
+     * Behövs för att spåra vem som gör vad i systemet, särskilt viktigt
+     * för audit trails och säkerhetsgranskning.
+     *
+     * @param userEmail vilken användare
+     * @param resource vilken resurs/endpoint
+     * @param method vilken HTTP-metod (GET, POST etc.)
+     * @param ipAddress från vilken IP
+     * @throws IllegalArgumentException om någon parameter är null
      */
-    public void logAccessDenied(String username, String resource, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("ACCESS_DENIED - User: %s, Resource: %s, IP: %s, Time: %s",
-                username, resource, ipAddress, timestamp);
+    public void logResourceAccess(String userEmail, String resource, String method, String ipAddress) {
+        if (userEmail == null || resource == null || method == null || ipAddress == null) {
+            throw new IllegalArgumentException("All parameters must be non-null");
+        }
 
-        securityLogger.warn(message);
-        logger.warn("Åtkomst nekad för användare {} till resurs {} från IP {}", username, resource, ipAddress);
+        try {
+            MDC.put("eventType", "RESOURCE_ACCESS");
+            MDC.put("userEmail", userEmail);
+            MDC.put("resource", resource);
+            MDC.put("method", method);
+            MDC.put("ipAddress", ipAddress);
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.info("Resursåtkomst: {} {} av användare: {}", method, resource, userEmail);
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar när nya användare registreras
-     * Bra att ha koll på när nya konton skapas
+    /**
+     * Loggar vad administratörer gör i systemet.
+     * Eftersom admins har höga behörigheter måste vi logga allt de gör.
+     * Det här är kritiskt för säkerheten och för att följa regler om loggning.
+     *
+     * @param adminEmail vilken admin som agerar
+     * @param action vad de gör
+     * @param targetUser vilken användare som påverkas (kan vara null)
+     * @param ipAddress från vilken IP
+     * @throws IllegalArgumentException om adminEmail, action eller ipAddress är null
      */
-    public void logUserRegistration(String username, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("USER_REGISTRATION - User: %s, IP: %s, Time: %s",
-                username, ipAddress, timestamp);
+    public void logAdminActivity(String adminEmail, String action, String targetUser, String ipAddress) {
+        if (adminEmail == null || action == null || ipAddress == null) {
+            throw new IllegalArgumentException("AdminEmail, action and IP address cannot be null");
+        }
 
-        securityLogger.info(message);
-        logger.info("Ny användare registrerad: {} från IP {}", username, ipAddress);
+        try {
+            MDC.put("eventType", "ADMIN_ACTION");
+            MDC.put("adminEmail", adminEmail);
+            MDC.put("action", action);
+            MDC.put("targetUser", targetUser != null ? targetUser : "N/A");
+            MDC.put("ipAddress", ipAddress);
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.info("Admin-åtgärd: {} utförd av: {} på: {}",
+                    action, adminEmail, targetUser != null ? targetUser : "systemet");
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar när administratörer ändrar användarroller
-     * Kritisk säkerhetshändelse som alltid ska loggas
+    /**
+     * Loggar säkerhetsincidenter och misstänkta aktiviteter.
+     * Om vi upptäcker något konstigt eller misstänkt måste vi logga det
+     * så vi kan analysera vad som hände senare.
+     *
+     * @param incidentType typ av incident (t.ex. "BRUTE_FORCE")
+     * @param description vad som hände
+     * @param ipAddress från vilken IP
+     * @param userEmail vilken användare (kan vara null för anonyma attacker)
+     * @throws IllegalArgumentException om incidentType, description eller ipAddress är null
      */
-    public void logRoleChange(String adminUsername, String targetUsername, String oldRole, String newRole, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("ROLE_CHANGE - Admin: %s, Target: %s, Old: %s, New: %s, IP: %s, Time: %s",
-                adminUsername, targetUsername, oldRole, newRole, ipAddress, timestamp);
+    public void logSecurityIncident(String incidentType, String description, String ipAddress, String userEmail) {
+        if (incidentType == null || description == null || ipAddress == null) {
+            throw new IllegalArgumentException("IncidentType, description and IP address cannot be null");
+        }
 
-        securityLogger.warn(message);
-        logger.warn("Admin {} ändrade roll för {} från {} till {} (IP: {})",
-                adminUsername, targetUsername, oldRole, newRole, ipAddress);
+        try {
+            MDC.put("eventType", "SECURITY_INCIDENT");
+            MDC.put("incidentType", incidentType);
+            MDC.put("description", description);
+            MDC.put("ipAddress", ipAddress);
+            MDC.put("userEmail", userEmail != null ? userEmail : "ANONYMOUS");
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.error("SÄKERHETSINCIDENT - {}: {} från IP: {}",
+                    incidentType, description, ipAddress);
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar när användare tas bort från systemet
-     * Också en kritisk händelse som ska spåras
+    /**
+     * Loggar systemfel som kan påverka säkerheten.
+     * Ibland händer det tekniska saker som kan vara säkerhetsproblem,
+     * så jag gjorde en metod för att logga sånt också.
+     *
+     * @param eventType typ av systemhändelse
+     * @param message huvudmeddelande
+     * @param details extra detaljer (kan vara null)
+     * @throws IllegalArgumentException om eventType eller message är null
      */
-    public void logUserDeletion(String adminUsername, String deletedUsername, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("USER_DELETION - Admin: %s, Deleted: %s, IP: %s, Time: %s",
-                adminUsername, deletedUsername, ipAddress, timestamp);
+    public void logSystemSecurityEvent(String eventType, String message, String details) {
+        if (eventType == null || message == null) {
+            throw new IllegalArgumentException("EventType and message cannot be null");
+        }
 
-        securityLogger.warn(message);
-        logger.warn("Admin {} tog bort användare {} (IP: {})", adminUsername, deletedUsername, ipAddress);
+        try {
+            MDC.put("eventType", "SYSTEM_SECURITY");
+            MDC.put("systemEventType", eventType);
+            MDC.put("message", message);
+            MDC.put("details", details != null ? details : "");
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
+
+            securityLogger.warn("System säkerhetshändelse - {}: {}", eventType, message);
+        } finally {
+            MDC.clear();
+        }
     }
 
-    /*
-     * Loggar misstänkta säkerhetshändelser
-     * För saker som JWT-manipulering, SQL injection-försök etc
+    /**
+     * Loggar när säkerhetsinställningar ändras.
+     * Vi måste hålla koll på alla ändringar av säkerhetskonfiguration
+     * eftersom det kan påverka hela systemets säkerhet.
+     *
+     * @param configType vilken typ av konfiguration
+     * @param change vad som ändrades
+     * @param adminEmail vem som ändrade
+     * @throws IllegalArgumentException om någon parameter är null
      */
-    public void logSuspiciousActivity(String description, String username, String ipAddress) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("SUSPICIOUS_ACTIVITY - Description: %s, User: %s, IP: %s, Time: %s",
-                description, username, ipAddress, timestamp);
+    public void logSecurityConfigChange(String configType, String change, String adminEmail) {
+        if (configType == null || change == null || adminEmail == null) {
+            throw new IllegalArgumentException("All parameters must be non-null");
+        }
 
-        securityLogger.error(message);
-        logger.error("Misstänkt aktivitet: {} (Användare: {}, IP: {})", description, username, ipAddress);
-    }
+        try {
+            MDC.put("eventType", "CONFIG_CHANGE");
+            MDC.put("configType", configType);
+            MDC.put("change", change);
+            MDC.put("adminEmail", adminEmail);
+            MDC.put("timestamp", LocalDateTime.now().format(formatter));
 
-    /*
-     * Loggar systemfel som kan vara säkerhetsrelaterade
-     * Tex databasfel, konfigurationsfel etc
-     */
-    public void logSecuritySystemError(String errorDescription, String component) {
-        String timestamp = LocalDateTime.now().format(formatter);
-        String message = String.format("SECURITY_SYSTEM_ERROR - Component: %s, Error: %s, Time: %s",
-                component, errorDescription, timestamp);
-
-        securityLogger.error(message);
-        logger.error("Säkerhetssystemfel i {}: {}", component, errorDescription);
+            securityLogger.info("Säkerhetskonfiguration ändrad - {}: {} av: {}",
+                    configType, change, adminEmail);
+        } finally {
+            MDC.clear();
+        }
     }
 }

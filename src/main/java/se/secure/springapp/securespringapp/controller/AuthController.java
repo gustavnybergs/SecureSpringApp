@@ -18,16 +18,33 @@ import jakarta.validation.Valid;
 import java.util.Map;
 
 /**
- * Controller för autentisering och användarregistrering
- * Hanterar inloggning, registrering och token-förnyelse
+ * Controller för all användarautentisering och registrering.
+ * Jag förberedde denna för User Story #8 men Utvecklare 1 ska implementera
+ * själva JWT-logiken och databasintegrationerna.
  *
- * TODO: Implementeras av Utvecklare 1 - JWT och autentiseringslogik
+ * Just nu returnerar alla endpoints placeholder-svar, men jag har lagt till
+ * komplett Swagger-dokumentation så vi vet exakt vad som ska implementeras.
+ * Alla säkerhetsaspekter är planerade i JavaDoc och @Operation-annotationerna.
+ *
+ TODO: Implementeras av Utvecklare 1 - JWT och autentiseringslogik
+ *
+ * @author Utvecklare 3 (förberedelse), Utvecklare 1 (implementation)
+ * @version 1.0
+ * @since 2025-06-09
  */
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Endpoints för användarautentisering och registrering")
 public class AuthController {
 
+    /**
+     * Registrerar nya användare i systemet med email och lösenord.
+     * Utvecklare 1 ska implementera BCrypt-hashing och databasintegration.
+     * Jag har förberett all validering och felhantering i Swagger-docs.
+     *
+     * @param request användarens registreringsdata (email, lösenord, namn)
+     * @return ResponseEntity med bekräftelse eller felmeddelande
+     */
     @Operation(
             summary = "Registrera ny användare",
             description = """
