@@ -1,34 +1,34 @@
-package se.secure.springapp.securespringapp.entity;
+package se.secure.springapp.securespringapp.dto;
 
-import jakarta.persistence.*;
 
-import java.util.List;
+import se.secure.springapp.securespringapp.entity.AppUser;
 
-@Entity
-public class AppUser {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class AppUserDTO {
+
     private Long id;
-
     private String username;
-    private String password;
     private String role;
-
     private boolean consentGiven;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-    private List<Note> notes;
+    // Tom konstruktor krävs av Spring
+    public AppUserDTO() {
+    }
 
+    // Används för att skapa DTO från AppUser
+    public AppUserDTO(AppUser user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.role = user.getRole();
+        this.consentGiven = user.isConsentGiven();
+    }
+
+    // Getters
     public Long getId() {
         return id;
     }
 
     public String getUsername() {
         return username;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public String getRole() {
@@ -39,11 +39,7 @@ public class AppUser {
         return consentGiven;
     }
 
-    public List<Note> getNotes() {
-        return notes;
-    }
-
-    // SETTERS
+    // Setters (också bra att ha för JSON-mappning)
     public void setId(Long id) {
         this.id = id;
     }
@@ -52,19 +48,11 @@ public class AppUser {
         this.username = username;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public void setRole(String role) {
         this.role = role;
     }
 
     public void setConsentGiven(boolean consentGiven) {
         this.consentGiven = consentGiven;
-    }
-
-    public void setNotes(List<Note> notes) {
-        this.notes = notes;
     }
 }
