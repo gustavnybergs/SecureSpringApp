@@ -1,6 +1,6 @@
 package se.secure.springapp.securespringapp.config;
 
-import se.secure.springapp.securespringapp.security.JwtAuthenticationFilter;
+import se.secure.springapp.securespringapp.filter.JwtAuthenticationFilter;  // Elie's uppdaterade import path
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,18 +19,18 @@ import java.time.Duration;
 
 /**
  * Huvudkonfiguration för Spring Security i applikationen.
- * Kombinerar Jawhar's JWT-autentisering med Utvecklare 3's säkerhetsheaders.
+ * Kombinerar Jawhar's JWT-autentisering, Gustav's säkerhetsheaders och Elie's uppdateringar.
  *
  * Här definieras rollbaserad åtkomstkontroll, JWT-integration och säkerhetsheaders
  * för skydd mot vanliga webbattacker som clickjacking, XSS och MIME-sniffing.
  *
- * @author Jawhar (JWT-autentisering), Utvecklare 3 (säkerhetsheaders)
- * @version 2.0 - Kombinerad implementation
+ * @author Jawhar (JWT-autentisering), Gustav (säkerhetsheaders), Elie (filter path + databas)
+ * @version 3.0 - Tredje kombinerad implementation
  * @since 2025-06-11
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Aktiverar @PreAuthorize och @PostAuthorize
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -42,9 +42,8 @@ public class SecurityConfig {
     /**
      * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler, JWT-filter och säkerhetsheaders.
      *
-     * Kombinerar Jawhar's JWT-implementation med omfattande säkerhetsheaders för produktionsmiljö.
-     * Publika endpoints (Swagger, autentisering) tillåts utan autentisering,
-     * medan admin/user-endpoints kräver respektive roller.
+     * Kombinerar Jawhar's JWT-implementation med Gustav's omfattande säkerhetsheaders
+     * och Elie's uppdaterade filter-sökvägar för produktionsmiljö.
      *
      * @param http HttpSecurity-objektet för att konfigurera säkerhetsinställningar
      * @return En komplett SecurityFilterChain med JWT-autentisering och säkerhetsheaders
@@ -60,7 +59,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Säkerhetsheaders för skydd mot vanliga webbattacker - Utvecklare 3's implementation
+                // Säkerhetsheaders för skydd mot vanliga webbattacker - Gustav's implementation
                 .headers(headers -> headers
                         // Cache-Control headers för säker caching av känsligt innehåll
                         .cacheControl(cache -> cache.disable())
@@ -83,7 +82,7 @@ public class SecurityConfig {
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 )
 
-                // Rollbaserad åtkomstkontroll - kombinerar båda implementationerna
+                // Rollbaserad åtkomstkontroll - kombinerar alla implementationer
                 .authorizeHttpRequests(auth -> auth
                         // Publika endpoints - ingen autentisering krävs
                         .requestMatchers("/api/auth/**").permitAll()
@@ -105,8 +104,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // JWT-filtret från Jawhar - körs FÖRE Spring Securitys standardfilter
-                // Detta validerar JWT-tokens och sätter upp säkerhetskontext för autentiserade användare
+                // JWT-filtret - körs FÖRE Spring Securitys standardfilter (Elie's uppdaterade filter path)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .build();
@@ -114,7 +112,6 @@ public class SecurityConfig {
 
     /**
      * BCrypt lösenordskryptering - säker standard för lösenordshantering.
-     * Implementerat av Jawhar för säker lösenordshantering.
      *
      * @return En instans av BCryptPasswordEncoder med standardstyrka (10 rounds)
      */
@@ -126,7 +123,6 @@ public class SecurityConfig {
     /**
      * Konfigurerar och exponerar AuthenticationManager som en Spring Bean.
      * Nödvändigt för att kunna utföra autentisering i AuthController.
-     * Implementerat av Jawhar för JWT-login-funktionalitet.
      *
      * @param config AuthenticationConfiguration-objektet från Spring Security
      * @return En instans av AuthenticationManager för autentiseringsprocesser

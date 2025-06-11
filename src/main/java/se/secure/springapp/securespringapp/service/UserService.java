@@ -3,7 +3,6 @@ package se.secure.springapp.securespringapp.service;
 import se.secure.springapp.securespringapp.model.User;
 import se.secure.springapp.securespringapp.repository.UserRepository;
 import se.secure.springapp.securespringapp.model.Role;
-import se.secure.springapp.securespringapp.exception.UserNotFoundException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,15 +11,15 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Service som hanterar användarrelaterade operationer.
  * Implementerar UserDetailsService för att integreras med Spring Security.
+ *
+ * Kombinerar Gustav's UserDetailsService implementation med Elie's registreringslogik.
  */
 @Service
 public class UserService implements UserDetailsService {
@@ -33,10 +32,16 @@ public class UserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Laddar användare för Spring Security autentisering.
+     * Söker först på användarnamn, sedan på email om användarnamn inte hittas.
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Försök först hitta via användarnamn, sedan via email
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+                .or(() -> userRepository.findByEmail(username))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username/email: " + username));
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
@@ -45,13 +50,18 @@ public class UserService implements UserDetailsService {
         );
     }
 
+    /**
+     * Konverterar rolluppsättning till Spring Security authorities.
+     */
     private Set<? extends GrantedAuthority> mapRolesToAuthorities(Set<Role> roles) {
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.name()))
-                .collect(Collectors.toSet()); // Collectors.toSet() är korrekt
+                .collect(Collectors.toSet());
     }
 
-
+    /**
+     * Registrerar ny användare med användarnamn och lösenord (Gustav's version).
+     */
     public User registerNewUser(String username, String password, boolean consentGiven) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists!");
@@ -61,16 +71,41 @@ public class UserService implements UserDetailsService {
         newUser.setUsername(username);
         newUser.setPassword(passwordEncoder.encode(password));
         newUser.setConsentGiven(consentGiven);
-        newUser.setRoles(Collections.singleton(Role.USER));
+        newUser.setRoles(new HashSet<>());
+        newUser.addRole(Role.USER);
 
         return userRepository.save(newUser);
     }
 
-    public User findUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+    /**
+     * Registrerar ny användare (Elie's förenklad version).
+     */
+    public User registerUser(String username, String rawPassword) {
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Användarnamnet finns redan");
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setRoles(new HashSet<>());
+        user.addRole(Role.USER);
+        user.setConsentGiven(false);
+
+        return userRepository.save(user);
     }
 
+    /**
+     * Hittar användare baserat på användarnamn.
+     */
+    public User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with username: " + username));
+    }
+
+    /**
+     * Tar bort användare baserat på användarnamn.
+     */
     public void deleteUserByUsername(String username) {
         User user = findUserByUsername(username);
         userRepository.delete(user);
