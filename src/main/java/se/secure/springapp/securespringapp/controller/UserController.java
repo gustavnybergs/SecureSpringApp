@@ -1,26 +1,54 @@
 package se.secure.springapp.securespringapp.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import se.secure.springapp.securespringapp.dto.AppUserDTO;
+import se.secure.springapp.securespringapp.model.User;
+import se.secure.springapp.securespringapp.model.UserPrincipal;
+import se.secure.springapp.securespringapp.service.UserService;
 
 /**
  * REST-controller för användarspecifika operationer.
  * Endpoints i denna controller ska vara tillgängliga för användare med rollen USER eller ADMIN.
  */
 @RestController
-@RequestMapping("/api/user") // Alla endpoints här börjar med /api/user
+@RequestMapping("/api/user")
 public class UserController {
 
+    private final UserService userService;
+
+    // Konstruktorinjektion av UserService
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
     /**
-     * Hämtar ett användar- eller administratörsspecifikt meddelande.
-     * Denna endpoint skyddas av Spring Security för att tillåta både USER- och ADMIN-roller.
-     *
-     * @return Ett ResponseEntity med ett välkomstmeddelande för användare och admins.
+     * Test-endpoint för att verifiera att användaren är inloggad.
      */
-    @GetMapping("/hello") // Enkel endpoint för att testa åtkomst
+    @GetMapping("/hello")
     public ResponseEntity<String> getUserHello() {
         return ResponseEntity.ok("Välkommen, du är inloggad som användare eller admin!");
+    }
+
+    /**
+     * Endpoint för att hämta information om den inloggade användaren.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<AppUserDTO> getOwnProfile(Authentication auth) {
+        UserPrincipal userPrincipal = (UserPrincipal) auth.getPrincipal();
+        Long id = userPrincipal.getUserId(); // Hämta ID från custom UserPrincipal
+        User user = userService.getUserById(id);
+        return ResponseEntity.ok(new AppUserDTO(user));
+    }
+
+    /**
+     * Endpoint för att ta bort sitt eget konto.
+     */
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteOwnAccount(Authentication auth) {
+        String username = auth.getName();
+        userService.deleteUserByUsername(username);
+        return ResponseEntity.noContent().build();
     }
 }

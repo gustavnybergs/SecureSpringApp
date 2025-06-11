@@ -4,6 +4,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import se.secure.springapp.securespringapp.entity.AppUser;
 import se.secure.springapp.securespringapp.entity.Note;
+import se.secure.springapp.securespringapp.repository.AppUserRepository;
 import se.secure.springapp.securespringapp.repository.NoteRepository;
 
 import java.nio.file.AccessDeniedException;
@@ -32,7 +33,7 @@ public class NoteService {
         return noteRepo.save(note);
     }
 
-    public void deleteNote(String username, Long noteId) {
+    public void deleteNote(String username, Long noteId) throws AccessDeniedException {
         Note note = noteRepo.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
 
