@@ -52,4 +52,14 @@ public class UserPrincipal implements UserDetails {
     public User getUser() {
         return user;
     }
+
+    /**
+     * Hämtar användarens ID från den underliggande User-entiteten.
+     * Denna metod behövs för JWT-token-generering med userId.
+     *
+     * @return användarens ID som Long
+     */
+    public Long getUserId() {
+        return user.getId();
+    }
 }
