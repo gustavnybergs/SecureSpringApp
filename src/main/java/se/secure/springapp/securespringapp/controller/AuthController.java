@@ -1,5 +1,6 @@
 package se.secure.springapp.securespringapp.controller;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import se.secure.springapp.securespringapp.dto.ErrorResponse;
 import se.secure.springapp.securespringapp.dto.LoginRequest;
 import se.secure.springapp.securespringapp.dto.RegisterRequest;
@@ -15,6 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import se.secure.springapp.securespringapp.model.Role;
+import se.secure.springapp.securespringapp.model.User;
+import se.secure.springapp.securespringapp.repository.UserRepository;
+
 import java.util.Map;
 
 /**
@@ -36,6 +41,13 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Endpoints för användarautentisering och registrering")
 public class AuthController {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * Registrerar nya användare i systemet med email och lösenord.
@@ -97,25 +109,51 @@ public class AuthController {
             )
     })
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(
-            @Parameter(
-                    description = "Användarens registreringsdata med email, lösenord och namn",
-                    required = true,
-                    schema = @Schema(implementation = RegisterRequest.class)
-            )
-            @Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
+        try {
+            // 1. Kontrollera om användarnamn eller email redan finns
+            if (userRepository.existsByUsername(request.getUsername())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Användarnamnet är redan taget"
+                ));
+            }
 
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Validera att email inte redan finns
-        // 2. Kryptera lösenord med BCrypt
-        // 3. Spara användare i databas med roll USER
-        // 4. Returnera bekräftelse
+            if (userRepository.existsByEmail(request.getEmail())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Email-adressen är redan registrerad"
+                ));
+            }
 
-        return ResponseEntity.status(201).body(Map.of(
-                "message", "User registration endpoint - Implementeras av Utvecklare 1",
-                "todo", "JWT och användarhantering",
-                "receivedEmail", request.getEmail()
-        ));
+            // 2. Kryptera lösenord med BCrypt
+            String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+            // 3. Skapa ny användare
+            User newUser = new User();
+            newUser.setUsername(request.getUsername());
+            newUser.setEmail(request.getEmail());
+            newUser.setPassword(hashedPassword);
+            newUser.setFullName(request.getFullName());
+            newUser.addRole(Role.USER); // Tilldela standardrollen USER
+            newUser.setConsentGiven(false); // Eventuellt sätta till true om det finns samtycke
+
+            // 4. Spara till databas
+            User savedUser = userRepository.save(newUser);
+
+            // 5. Returnera 201 Created med användarinfo (utan lösenord)
+            return ResponseEntity.status(201).body(Map.of(
+                    "message", "Användare skapad framgångsrikt",
+                    "userId", savedUser.getId(),
+                    "username", savedUser.getUsername(),
+                    "email", savedUser.getEmail(),
+                    "role", "USER"
+            ));
+
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", "Ett internt fel uppstod vid registrering",
+                    "details", ex.getMessage()
+            ));
+        }
     }
 
     @Operation(
