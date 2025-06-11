@@ -1,6 +1,6 @@
 package se.secure.springapp.securespringapp.config;
 
-import se.secure.springapp.securespringapp.filter.JwtAuthenticationFilter;  // Elie's uppdaterade import path
+import se.secure.springapp.securespringapp.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,18 +14,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 /**
  * Huvudkonfiguration för Spring Security i applikationen.
  * Kombinerar Jawhar's JWT-autentisering, Gustav's säkerhetsheaders och Elie's uppdateringar.
+ * UPPDATERAD: Lagt till CORS-support för React frontend på port 3000.
  *
- * Här definieras rollbaserad åtkomstkontroll, JWT-integration och säkerhetsheaders
- * för skydd mot vanliga webbattacker som clickjacking, XSS och MIME-sniffing.
+ * Här definieras rollbaserad åtkomstkontroll, JWT-integration, säkerhetsheaders
+ * och CORS-konfiguration för skydd mot vanliga webbattacker.
  *
- * @author Jawhar (JWT-autentisering), Gustav (säkerhetsheaders), Elie (filter path + databas)
- * @version 3.0 - Tredje kombinerad implementation
+ * @author Jawhar (JWT-autentisering), Gustav (säkerhetsheaders), Elie (filter path + databas), Utvecklare 3 (CORS)
+ * @version 4.0 - Lagt till CORS för React frontend
  * @since 2025-06-11
  */
 @Configuration
@@ -40,18 +45,42 @@ public class SecurityConfig {
     }
 
     /**
-     * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler, JWT-filter och säkerhetsheaders.
+     * Konfigurerar CORS för React frontend på port 3000.
+     * FIXAD VERSION - Rättade konfigurationen för att lösa preflight-problem.
      *
-     * Kombinerar Jawhar's JWT-implementation med Gustav's omfattande säkerhetsheaders
-     * och Elie's uppdaterade filter-sökvägar för produktionsmiljö.
+     * @return CorsConfigurationSource med konfiguration för React integration
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Ändra från setAllowedOriginPatterns till setAllowedOrigins
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    /**
+     * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler, JWT-filter, säkerhetsheaders och CORS.
+     *
+     * Kombinerar Jawhar's JWT-implementation med Gustav's omfattande säkerhetsheaders,
+     * Elie's uppdaterade filter-sökvägar och CORS-support för React frontend.
      *
      * @param http HttpSecurity-objektet för att konfigurera säkerhetsinställningar
-     * @return En komplett SecurityFilterChain med JWT-autentisering och säkerhetsheaders
+     * @return En komplett SecurityFilterChain med JWT-autentisering, säkerhetsheaders och CORS
      * @throws Exception om konfigurationen misslyckas
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                // Aktivera CORS för React frontend
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // Deaktiverar CSRF eftersom vi använder JWT (stateless och token-baserad autentisering)
                 .csrf(csrf -> csrf.disable())
 
