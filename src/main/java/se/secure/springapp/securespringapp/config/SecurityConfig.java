@@ -76,8 +76,7 @@ public class SecurityConfig {
 
                         // HTTP Strict Transport Security (HSTS) - tvingar HTTPS-användning
                         .httpStrictTransportSecurity(hsts -> hsts
-                                .maxAgeInSeconds(Duration.ofDays(365).toSeconds()) // 1 år
-                                .includeSubdomains(true)) // Inkluderar även subdomäner
+                                .maxAgeInSeconds(Duration.ofDays(365).toSeconds())) // 1 år
 
                         // Referrer Policy - kontrollerar vilken referrer-information som skickas vid länkar
                         .addHeaderWriter(new ReferrerPolicyHeaderWriter(

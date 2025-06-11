@@ -193,7 +193,7 @@ public class GlobalExceptionHandler {
      * Kollar först X-Forwarded-For header för proxy-situationer.
      *
      * @param request WebRequest att extrahera IP från
-     * @return Klient-IP som sträng
+     * @return Klient-IP som sträng eller "unknown" om det inte kan bestämmas
      */
     private String getClientIP(WebRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
@@ -206,7 +206,7 @@ public class GlobalExceptionHandler {
             return xRealIP;
         }
 
-        // Fallback till remote address från request
-        return request.getRemoteAddress();
+        // Fallback - WebRequest har ingen direkt metod för remote address
+        return "unknown";
     }
 }
