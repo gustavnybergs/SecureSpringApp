@@ -1,193 +1,212 @@
 package se.secure.springapp.securespringapp.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import se.secure.springapp.securespringapp.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import se.secure.springapp.securespringapp.dto.ErrorResponse;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
- * Global undantagshanterare som fångar upp alla fel i applikationen.
- * Jag skapade denna för User Story #6 (38 på github) eftersom vi behövde konsekvent felhantering
- * och standardiserade felmeddelanden för hela REST API:et.
+ * Global felhanterare för REST-controllers.
+ * Kombinerar Jawhar's UserNotFoundException-hantering med Utvecklare 3's säkerhetsloggning.
  *
- * Utan detta skulle olika fel se olika ut och användare skulle få tekniska
- * felmeddelanden som kan avslöja känslig systeminformation. Nu får alla
- * fel samma format och vi kan logga säkerhetshändelser ordentligt.
+ * Centraliserar felhantering för säkerhet, autentisering och allmänna applikationsfel.
+ * Loggar säkerhetshändelser för övervakning och incident response.
  *
- * @author Utvecklare 3
- * @version 1.0
- * @since 2025-06-09
+ * @author Jawhar (UserNotFoundException), Utvecklare 3 (säkerhetsloggning och utökad felhantering)
+ * @version 2.0 - Kombinerad implementation
+ * @since 2025-06-11
  */
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY");
 
     /**
-     * Hanterar UserNotFoundException och returnerar 404-svar.
-     * Enligt VG-kraven ska detta returnera ResponseEntity med 404-status.
-     * Jag loggar även felet för säkerhetsgranskningar.
+     * Hanterar UserNotFoundException från Jawhar's implementation.
+     * Returnerar 404 Not Found när användare inte hittas i systemet.
      *
-     * @param ex UserNotFoundException som kastats
-     * @param request HTTP-request för kontext och loggning
-     * @return ResponseEntity med ErrorResponse och 404-status
+     * @param ex Undantaget som kastades
+     * @param request WebRequest-objektet med begäran-information
+     * @return ResponseEntity med felmeddelande och HTTP-status 404
      */
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(
-            UserNotFoundException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleUserNotFoundException(
+            UserNotFoundException ex, WebRequest request) {
 
-        String requestPath = request.getRequestURI();
-        logger.warn("UserNotFoundException på endpoint {}: {}", requestPath, ex.getMessage());
+        logger.warn("User not found: {} - Request: {}", ex.getMessage(), request.getDescription(false));
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.NOT_FOUND.value());
-        errorResponse.setMessage(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-    }
-
-    /**
-     * Hanterar AccessDeniedException när användare saknar behörighet.
-     * Detta händer när någon försöker komma åt admin-endpoints utan ADMIN-roll
-     * eller andra skyddade resurser de inte har tillgång till.
-     *
-     * @param ex AccessDeniedException från Spring Security
-     * @param request HTTP-request för loggning av säkerhetshändelser
-     * @return ResponseEntity med ErrorResponse och 403-status
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-            AccessDeniedException ex,
-            HttpServletRequest request) {
-
-        String requestPath = request.getRequestURI();
-        String clientIp = request.getRemoteAddr();
-
-        logger.warn("SECURITY - Åtkomst nekad på endpoint {} från IP {}: {}",
-                requestPath, clientIp, ex.getMessage());
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.FORBIDDEN.value());
-        errorResponse.setMessage("Du saknar behörighet för att komma åt denna resurs");
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
-    }
-
-    /**
-     * Hanterar autentiseringsfel från Spring Security.
-     * Detta händer när JWT-tokens är ogiltiga, utgångna eller saknas helt.
-     * Viktigt att logga för säkerhetsövervakning.
-     *
-     * @param ex AuthenticationException från Spring Security
-     * @param request HTTP-request för säkerhetsloggning
-     * @return ResponseEntity med ErrorResponse och 401-status
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(
-            AuthenticationException ex,
-            HttpServletRequest request) {
-
-        String clientIp = request.getRemoteAddr();
-        String requestPath = request.getRequestURI();
-
-        logger.warn("SECURITY - Autentiseringsfel från IP {} på endpoint {}: {}",
-                clientIp, requestPath, ex.getMessage());
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-        errorResponse.setMessage("Autentisering krävs. Ange en giltig JWT-token.");
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-    }
-
-    /**
-     * Hanterar validationsfel från Spring Boot Validation.
-     * Detta händer när inkommande data inte uppfyller valideringskraven,
-     * t.ex. vid användarregistrering med ogiltigt lösenord.
-     *
-     * @param ex MethodArgumentNotValidException från Spring Validation
-     * @param request HTTP-request för kontext
-     * @return ResponseEntity med ErrorResponse och 400-status
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
-
-        StringBuilder errorMessage = new StringBuilder("Valideringsfel: ");
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errorMessage.append(error.getField())
-                        .append(" - ")
-                        .append(error.getDefaultMessage())
-                        .append("; ")
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.NOT_FOUND.value(),
+                "error", "User Not Found",
+                "message", ex.getMessage(),
+                "path", request.getDescription(false).replace("uri=", "")
         );
 
-        logger.info("Valideringsfel på endpoint {}: {}", request.getRequestURI(), errorMessage);
-
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
-        errorResponse.setMessage(errorMessage.toString());
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     /**
-     * Hanterar allmänna RuntimeException som inte fångas av andra handlers.
-     * Detta är en säkerhetsnät för oväntade fel och säkerställer att ingen
-     * känslig systeminformation exponeras för klienter.
+     * Hanterar autentiseringsfel (felaktiga användaruppgifter).
+     * Loggar säkerhetshändelser för potentiella intrångsförsök.
      *
-     * @param ex RuntimeException som kastats
-     * @param request HTTP-request för loggning
-     * @return ResponseEntity med ErrorResponse och 500-status
+     * @param ex AuthenticationException från inloggningsförsök
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med 401 Unauthorized
      */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex,
-            HttpServletRequest request) {
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthenticationException(
+            AuthenticationException ex, WebRequest request) {
 
-        String requestPath = request.getRequestURI();
-        String clientIp = request.getRemoteAddr();
+        // Säkerhetsloggning för misslyckade inloggningsförsök
+        securityLogger.warn("Authentication failed - IP: {}, Request: {}, Reason: {}",
+                getClientIP(request), request.getDescription(false), ex.getMessage());
 
-        logger.error("Oväntat fel på endpoint {} från IP {}: {}",
-                requestPath, clientIp, ex.getMessage(), ex);
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.UNAUTHORIZED.value(),
+                "error", "Authentication Failed",
+                "message", "Invalid username or password",
+                "path", request.getDescription(false).replace("uri=", "")
+        );
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        errorResponse.setMessage("Ett internt fel har inträffat. Kontakta systemadministratören.");
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
     /**
-     * Hanterar IllegalArgumentException från våra egna valideringar.
-     * Detta händer t.ex. när SecurityEventLogger får null-värden eller
-     * andra metoder får ogiltiga parametrar.
+     * Hanterar åtkomstförbud (användare har inte tillräckliga rättigheter).
+     * Loggar säkerhetshändelser för obehöriga åtkomstförsök.
      *
-     * @param ex IllegalArgumentException som kastats
-     * @param request HTTP-request för kontext
-     * @return ResponseEntity med ErrorResponse och 400-status
+     * @param ex AccessDeniedException från rollbaserad säkerhet
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med 403 Forbidden
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
+            AccessDeniedException ex, WebRequest request) {
+
+        // Säkerhetsloggning för obehöriga åtkomstförsök
+        securityLogger.warn("Access denied - IP: {}, Request: {}, Reason: {}",
+                getClientIP(request), request.getDescription(false), ex.getMessage());
+
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Access Denied",
+                "message", "You don't have permission to access this resource",
+                "path", request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Hanterar felaktiga användaruppgifter specifikt (undermängd av AuthenticationException).
+     *
+     * @param ex BadCredentialsException från inloggning
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med 401 Unauthorized
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCredentialsException(
+            BadCredentialsException ex, WebRequest request) {
+
+        securityLogger.warn("Bad credentials attempt - IP: {}, Request: {}",
+                getClientIP(request), request.getDescription(false));
+
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.UNAUTHORIZED.value(),
+                "error", "Invalid Credentials",
+                "message", "Username or password is incorrect",
+                "path", request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Allmän felhanterare för oväntade serverfel.
+     * Loggar detaljerad information för debugging utan att exponera känslig information.
+     *
+     * @param ex Exception som inte fångats av andra handlers
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med 500 Internal Server Error
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(
+            Exception ex, WebRequest request) {
+
+        // Logga fullständig stack trace för debugging
+        logger.error("Unexpected error occurred - Request: {}", request.getDescription(false), ex);
+
+        // Returnera generiskt felmeddelande utan känslig information
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "error", "Internal Server Error",
+                "message", "An unexpected error occurred. Please try again later.",
+                "path", request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Hanterar IllegalArgumentException för validerings-fel.
+     *
+     * @param ex IllegalArgumentException från validering
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med 400 Bad Request
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
+            IllegalArgumentException ex, WebRequest request) {
 
-        logger.warn("IllegalArgumentException på endpoint {}: {}",
-                request.getRequestURI(), ex.getMessage());
+        logger.warn("Invalid argument provided - Request: {}, Error: {}",
+                request.getDescription(false), ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
-        errorResponse.setMessage("Ogiltiga parametrar: " + ex.getMessage());
+        Map<String, Object> errorResponse = Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "error", "Bad Request",
+                "message", ex.getMessage(),
+                "path", request.getDescription(false).replace("uri=", "")
+        );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Extraherar klient-IP från WebRequest för säkerhetsloggning.
+     * Kollar först X-Forwarded-For header för proxy-situationer.
+     *
+     * @param request WebRequest att extrahera IP från
+     * @return Klient-IP som sträng eller "unknown" om det inte kan bestämmas
+     */
+    private String getClientIP(WebRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIP = request.getHeader("X-Real-IP");
+        if (xRealIP != null && !xRealIP.isEmpty()) {
+            return xRealIP;
+        }
+
+        // Fallback - WebRequest har ingen direkt metod för remote address
+        return "unknown";
     }
 }

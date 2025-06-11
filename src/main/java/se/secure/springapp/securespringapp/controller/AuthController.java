@@ -1,46 +1,49 @@
 package se.secure.springapp.securespringapp.controller;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import se.secure.springapp.securespringapp.dto.ErrorResponse;
-import se.secure.springapp.securespringapp.dto.LoginRequest;
-import se.secure.springapp.securespringapp.dto.RegisterRequest;
+import se.secure.springapp.securespringapp.dto.LoginRequest;  // Elie's DTO path
+import se.secure.springapp.securespringapp.dto.RegisterRequest;  // Elie's DTO
+import se.secure.springapp.securespringapp.dto.ErrorResponse;  // Elie's DTO
+import se.secure.springapp.securespringapp.model.JwtUtil;  // Elie's JWT utilities
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;  // Elie's addition
+import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import se.secure.springapp.securespringapp.model.Role;
-import se.secure.springapp.securespringapp.model.User;
-import se.secure.springapp.securespringapp.repository.UserRepository;
+import jakarta.validation.Valid;  // Elie's validation
+import se.secure.springapp.securespringapp.model.Role;  // Elie's model
+import se.secure.springapp.securespringapp.model.User;  // Elie's model
+import se.secure.springapp.securespringapp.repository.UserRepository;  // Elie's repository
 
 import java.util.Map;
 
 /**
- * Controller för all användarautentisering och registrering.
- * Jag förberedde denna för User Story #8 men Utvecklare 1 ska implementera
- * själva JWT-logiken och databasintegrationerna.
+ * REST Controller för autentisering och användarhantering.
+ * Kombinerar Jawhar's JWT-implementation, Gustav's Swagger-dokumentation och Elie's registrering.
  *
- * Just nu returnerar alla endpoints placeholder-svar, men jag har lagt till
- * komplett Swagger-dokumentation så vi vet exakt vad som ska implementeras.
- * Alla säkerhetsaspekter är planerade i JavaDoc och @Operation-annotationerna.
+ * Hanterar inloggning, registrering och token-validering för säker åtkomst till applikationen.
  *
- TODO: Implementeras av Utvecklare 1 - JWT och autentiseringslogik
- *
- * @author Utvecklare 3 (förberedelse), Utvecklare 1 (implementation)
- * @version 1.0
- * @since 2025-06-09
+ * @author Jawhar (JWT-implementation), Gustav (Swagger-dokumentation), Elie (registrering + databas)
+ * @version 3.0 - Tredje kombinerad implementation
+ * @since 2025-06-11
  */
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Authentication", description = "Endpoints för användarautentisering och registrering")
+@Tag(name = "Authentication", description = "Endpoints för användarautentisering och JWT-hantering")
 public class AuthController {
+
+    // Elie's dependency injection för registrering
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -49,29 +52,102 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Elie's dependency injection för JWT
+    @Autowired
+    private AuthenticationManager authManager;
+
+    @Autowired
+    private JwtUtil jwtUtil;  // Elie's JWT utility
+
     /**
-     * Registrerar nya användare i systemet med email och lösenord.
-     * Utvecklare 1 ska implementera BCrypt-hashing och databasintegration.
-     * Jag har förberett all validering och felhantering i Swagger-docs.
+     * Autentiserar användare och returnerar JWT-token för åtkomst till skyddade endpoints.
+     * Använder Jawhar's JWT-implementation med Gustav's dokumentation.
      *
-     * @param request användarens registreringsdata (email, lösenord, namn)
-     * @return ResponseEntity med bekräftelse eller felmeddelande
+     * @param request LoginRequest med användaruppgifter (username/email och password)
+     * @return ResponseEntity med JWT-token vid lyckad autentisering
      */
+    @PostMapping("/login")
+    @Operation(
+            summary = "Logga in användare",
+            description = "Autentiserar användare med användarnamn/email och lösenord. Returnerar JWT-token vid framgång."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Inloggning lyckad - JWT-token returnerad",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(type = "string"),
+                            examples = @ExampleObject(
+                                    name = "Framgångsrik inloggning",
+                                    value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Ogiltiga användaruppgifter",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Fel användaruppgifter",
+                                    value = "{\"error\": \"Invalid username or password\"}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Felaktig begäran - saknas obligatoriska fält",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Saknas fält",
+                                    value = "{\"error\": \"Username and password are required\"}"
+                            )
+                    )
+            )
+    })
+    public ResponseEntity<String> login(
+            @Parameter(
+                    description = "Användaruppgifter för inloggning",
+                    required = true,
+                    schema = @Schema(implementation = LoginRequest.class)
+            )
+            @RequestBody LoginRequest request
+    ) {
+        // Kombinerad JWT-implementation (Jawhar's logic + Elie's JwtUtil)
+        Authentication authentication = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        String token = jwtUtil.generateToken((UserDetails) authentication.getPrincipal());
+
+        return ResponseEntity.ok(token);
+    }
+
+    /**
+     * Registrerar ny användare i systemet.
+     * Elie's fullständiga implementation med Gustav's dokumentation.
+     *
+     * @param request RegisterRequest med användaruppgifter
+     * @return ResponseEntity med registreringsresultat
+     */
+    @PostMapping("/register")
     @Operation(
             summary = "Registrera ny användare",
             description = """
-            Skapar ett nytt användarkonto med email och lösenord. 
-            
-            **Standard-roll:** USER
-            
-            **Krav:**
-            - Email måste vara giltig och unik
-            - Lösenord måste vara minst 8 tecken
-            - Fullständigt namn är valfritt
-            
-            **Returvärde:**
-            Bekräftelsemeddelande med användar-ID vid framgång.
-            """
+        Skapar ett nytt användarkonto med email och lösenord. 
+        
+        **Standard-roll:** USER
+        
+        **Krav:**
+        - Email måste vara giltig och unik
+        - Lösenord måste vara minst 8 tecken
+        - Fullständigt namn är valfritt
+        
+        **Returvärde:**
+        Bekräftelsemeddelande med användar-ID vid framgång.
+        """
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -81,13 +157,13 @@ public class AuthController {
                             mediaType = "application/json",
                             schema = @Schema(
                                     example = """
-                        {
-                            "message": "Användare skapad framgångsrikt",
-                            "userId": 123,
-                            "email": "user@example.com",
-                            "role": "USER"
-                        }
-                        """
+                {
+                    "message": "Användare skapad framgångsrikt",
+                    "userId": 123,
+                    "email": "user@example.com",
+                    "role": "USER"
+                }
+                """
                             )
                     )
             ),
@@ -108,9 +184,9 @@ public class AuthController {
                     )
             )
     })
-    @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         try {
+            // Elie's registrerings-implementation
             // 1. Kontrollera om användarnamn eller email redan finns
             if (userRepository.existsByUsername(request.getUsername())) {
                 return ResponseEntity.badRequest().body(Map.of(
@@ -134,7 +210,7 @@ public class AuthController {
             newUser.setPassword(hashedPassword);
             newUser.setFullName(request.getFullName());
             newUser.addRole(Role.USER); // Tilldela standardrollen USER
-            newUser.setConsentGiven(false); // Eventuellt sätta till true om det finns samtycke
+            newUser.setConsentGiven(false);
 
             // 4. Spara till databas
             User savedUser = userRepository.save(newUser);
@@ -156,120 +232,26 @@ public class AuthController {
         }
     }
 
+    /**
+     * Validerar JWT-token och returnerar tokeninformation.
+     * Gustav's placeholder implementation för framtida utveckling.
+     *
+     * @return ResponseEntity med tokenvalidering och användarinfo
+     */
+    @PostMapping("/validate-token")
     @Operation(
-            summary = "Logga in användare",
-            description = """
-            Autentiserar användare med email och lösenord. 
-            
-            **Process:**
-            1. Validerar inloggningsuppgifter mot databas
-            2. Genererar JWT-token vid lyckad autentisering
-            3. Returnerar token med användarinformation
-            
-            **JWT-token:**
-            - Giltig i 24 timmar
-            - Innehåller användar-ID och roller
-            - Används i Authorization header: `Bearer <token>`
-            
-            **Säkerhet:**
-            - Lösenord hashas med BCrypt
-            - Misslyckade försök loggas för säkerhetsövervakning
-            """
+            summary = "Validera JWT-token",
+            description = "Kontrollerar om den angivna JWT-token är giltig och returnerar användarinformation."
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Inloggning lyckad, JWT-token returnerad",
+                    description = "Token är giltig",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(
-                                    example = """
-                        {
-                            "message": "Inloggning lyckad",
-                            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                            "user": {
-                                "id": 123,
-                                "email": "user@example.com",
-                                "role": "USER",
-                                "fullName": "Anna Andersson"
-                            },
-                            "expiresAt": "2024-06-09T10:32:00Z"
-                        }
-                        """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Ogiltiga inloggningsuppgifter",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Serverfel vid inloggning",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            )
-    })
-    @PostMapping("/login")
-    public ResponseEntity<?> loginUser(
-            @Parameter(
-                    description = "Användarens inloggningsdata med email och lösenord",
-                    required = true,
-                    schema = @Schema(implementation = LoginRequest.class)
-            )
-            @Valid @RequestBody LoginRequest request) {
-
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Hitta användare baserat på email
-        // 2. Verifiera lösenord med BCrypt
-        // 3. Generera JWT-token med användarinfo
-        // 4. Logga lyckad inloggning
-        // 5. Returnera token och användardata
-
-        return ResponseEntity.ok(Map.of(
-                "message", "User login endpoint - Implementeras av Utvecklare 1",
-                "todo", "JWT generering och lösenordsverifiering",
-                "dummyToken", "jwt-token-placeholder",
-                "receivedEmail", request.getEmail()
-        ));
-    }
-
-    @Operation(
-            summary = "Förnya JWT-token",
-            description = """
-            Förnyar en giltig JWT-token med en ny med längre giltighet.
-            
-            **Användning:**
-            - Anropas när nuvarande token snart går ut
-            - Kräver giltig, icke-utgången token
-            - Returnerar ny token med samma behörigheter
-            
-            **Säkerhet:**
-            - Validerar att token är äkta och inte manipulerad
-            - Kontrollerar att användaren fortfarande är aktiv
-            - Gamla token invalideras automatiskt
-            """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Token förnyad framgångsrikt",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = """
-                        {
-                            "message": "Token förnyad framgångsrikt",
-                            "newToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                            "expiresAt": "2024-06-10T10:32:00Z"
-                        }
-                        """
+                            examples = @ExampleObject(
+                                    name = "Giltig token",
+                                    value = "{\"message\": \"Token validation endpoint - Använder SecurityContext från JWT-filter\", \"valid\": true}"
                             )
                     )
             ),
@@ -278,149 +260,17 @@ public class AuthController {
                     description = "Ogiltig eller utgången token",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            )
-    })
-    @SecurityRequirement(name = "bearerAuth")
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(
-            @Parameter(
-                    description = "Authorization header med Bearer token (Bearer <token>)",
-                    required = true,
-                    example = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-            )
-            @RequestHeader("Authorization") String authHeader) {
-
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Extrahera token från Authorization header
-        // 2. Validera token-signatur och giltighet
-        // 3. Kontrollera att användaren fortfarande är aktiv
-        // 4. Generera ny token med samma claims
-        // 5. Invalidera gamla token (optional)
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Token refresh endpoint - Implementeras av Utvecklare 1",
-                "todo", "JWT validering och förnyelse",
-                "receivedHeader", authHeader.substring(0, Math.min(50, authHeader.length())) + "..."
-        ));
-    }
-
-    @Operation(
-            summary = "Logga ut användare",
-            description = """
-            Invaliderar den aktuella JWT-token och loggar ut användaren.
-            
-            **Funktionalitet:**
-            - Lägger till token på blacklist
-            - Loggar utloggningshändelse
-            - Token kan inte användas efter utloggning
-            
-            **Säkerhet:**
-            - Förhindrar återanvändning av token
-            - Säkerhetsloggning för audit trail
-            """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Utloggning lyckad",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = """
-                        {
-                            "message": "Utloggning lyckad",
-                            "loggedOutAt": "2024-06-08T10:32:00Z"
-                        }
-                        """
+                            examples = @ExampleObject(
+                                    name = "Ogiltig token",
+                                    value = "{\"error\": \"Invalid or expired token\"}"
                             )
                     )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Ogiltig token",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
             )
     })
-    @SecurityRequirement(name = "bearerAuth")
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(
-            @Parameter(
-                    description = "Authorization header med Bearer token",
-                    required = true
-            )
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Extrahera token från header
-        // 2. Lägg till token på blacklist
-        // 3. Logga utloggningshändelse
-        // 4. Returnera bekräftelse
-
-        return ResponseEntity.ok(Map.of(
-                "message", "User logout endpoint - Implementeras av Utvecklare 1",
-                "todo", "Token blacklisting och säkerhetsloggning",
-                "timestamp", System.currentTimeMillis()
-        ));
-    }
-
-    @Operation(
-            summary = "Kontrollera token-status",
-            description = """
-            Validerar en JWT-token och returnerar information om dess giltighet.
-            
-            **Användning:**
-            - Frontend kan kontrollera om token fortfarande är giltig
-            - Returnerar användarinformation från token
-            - Används för att uppdatera UI baserat på inloggningsstatus
-            """
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Token är giltig",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    example = """
-                        {
-                            "valid": true,
-                            "user": {
-                                "id": 123,
-                                "email": "user@example.com",
-                                "role": "USER"
-                            },
-                            "expiresAt": "2024-06-09T10:32:00Z"
-                        }
-                        """
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Token är ogiltig eller utgången",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            )
-    })
-    @SecurityRequirement(name = "bearerAuth")
-    @GetMapping("/validate")
     public ResponseEntity<?> validateToken() {
-
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Token valideras automatiskt av JWT-filter
-        // 2. Om vi kommer hit är token giltig
-        // 3. Returnera användarinfo från SecurityContext
-
+        // TODO: Implementera med SecurityContext från JWT-filter när JwtAuthenticationFilter är komplett
         return ResponseEntity.ok(Map.of(
-                "message", "Token validation endpoint - Implementeras av Utvecklare 1",
-                "todo", "JWT validering och användardata från SecurityContext",
+                "message", "Token validation endpoint - Använder SecurityContext från JWT-filter",
                 "valid", true
         ));
     }

@@ -1,58 +1,68 @@
-
 package se.secure.springapp.securespringapp.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 /**
- * Exception som kastas när en användare med specificerat ID inte kan hittas.
- * Denna exception ärver från RuntimeException enligt projektuppgiftens krav
- * och hanteras av GlobalExceptionHandler för att returnera HTTP 404 Not Found.
+ * Anpassat undantag för när en användare inte hittas i systemet.
+ * Kombinerar Jawhar's @ResponseStatus-annotation med Utvecklare 3's utökade konstruktorer.
  *
- * Används i situationer där:
- * - En användare försöker accediera en icke-existerande användar-ID
- * - CRUD-operationer refererar till ogiltiga användarreferenser
- * - Admin-funktioner försöker modifiera icke-existerande användare
+ * Används för att signalera 404 Not Found HTTP-svar när användaroperationer misslyckas
+ * på grund av att användaren inte existerar i databasen.
  *
- * @author Utvecklare 3
- * @version 1.0
- * @since 2024-06-09
+ * @author Jawhar (@ResponseStatus-annotation), Utvecklare 3 (utökade konstruktorer)
+ * @version 2.0 - Kombinerad implementation
+ * @since 2025-06-11
  */
+@ResponseStatus(HttpStatus.NOT_FOUND) // Jawhar's annotation - returnerar automatiskt 404 Not Found
 public class UserNotFoundException extends RuntimeException {
 
     /**
-     * Skapar en UserNotFoundException med standardmeddelande.
-     * Använder ett generiskt felmeddelande som inte avslöjar systemdetaljer.
-     */
-    public UserNotFoundException() {
-        super("Användare kunde inte hittas");
-    }
-
-    /**
-     * Skapar en UserNotFoundException med anpassat felmeddelande.
-     * Tillåter specifika felmeddelanden baserat på kontexten där exception kastas.
+     * Standard konstruktor med anpassat felmeddelande.
+     * Jawhar's ursprungliga implementation.
      *
-     * @param message detaljerat felmeddelande som beskriver varför användaren inte hittades
+     * @param message Beskrivande meddelande om vad som gick fel
      */
     public UserNotFoundException(String message) {
         super(message);
     }
 
     /**
-     * Skapar en UserNotFoundException med felmeddelande baserat på användar-ID.
-     * Bekvämlighetsmetod för vanliga fall där ett specifikt ID inte kunde hittas.
+     * Konstruktor med meddelande och orsakskedja för bättre felsökning.
+     * Utvecklare 3's tillägg för mer detaljerad felhantering.
+     *
+     * @param message Beskrivande meddelande om vad som gick fel
+     * @param cause Underliggande orsak till felet (t.ex. databasfel)
+     */
+    public UserNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Konstruktor med fördefinierat meddelande baserat på användar-ID.
+     * Utvecklare 3's bekvämlighetsmetod för vanliga fall.
      *
      * @param userId ID för användaren som inte kunde hittas
      */
     public UserNotFoundException(Long userId) {
-        super("Användare med ID " + userId + " kunde inte hittas");
+        super("User with ID " + userId + " not found");
     }
 
     /**
-     * Skapar en UserNotFoundException med felmeddelande och bakomliggande orsak.
-     * Användbar när exception orsakas av en annan exception (t.ex. databasfel).
+     * Konstruktor med fördefinierat meddelande baserat på användarnamn.
+     * Utvecklare 3's bekvämlighetsmetod för autentiseringsfel.
      *
-     * @param message felmeddelande som beskriver problemet
-     * @param cause bakomliggande exception som orsakade detta fel
+     * @param username Användarnamnet som inte kunde hittas
      */
-    public UserNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    public UserNotFoundException(String username, boolean isUsername) {
+        super(isUsername ? "User with username '" + username + "' not found" : username);
+    }
+
+    /**
+     * Standard konstruktor utan meddelande.
+     * Utvecklare 3's tillägg för situationer där meddelandet sätts senare.
+     */
+    public UserNotFoundException() {
+        super("User not found");
     }
 }
