@@ -1,9 +1,8 @@
 package se.secure.springapp.securespringapp.config;
 
-// TODO: Lägg till JwtAuthFilter när Utvecklare 1 har skapat den
-// import se.secure.springapp.securespringapp.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -11,38 +10,30 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+
 import java.time.Duration;
-// TODO: Lägg till UsernamePasswordAuthenticationFilter import när JWT implementeras
-// import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Huvudkonfiguration för Spring Security i applikationen.
  * Här definierar jag vilka endpoints som kräver autentisering, vilka roller
  * som behövs för olika delar av API:et och vilka säkerhetsheaders som ska användas.
  *
- * Jag förbereder även för JWT-autentisering som Utvecklare 1 ska implementera.
- * Just nu är det mesta kommenterat bort tills JWT-delen är klar.
+ * Utvecklare 2 (Jawhar) kommer att lägga till JWT-autentisering senare.
+ * Jag har förberett strukturen med rollbaserad åtkomstkontroll.
  *
- * @author Utvecklare 3
+ * @author Utvecklare 3 (säkerhetsheaders), Utvecklare 2 (JWT kommer senare)
  * @version 1.0
  * @since 2025-06-09
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
-    // TODO: Lägg till JwtAuthFilter när Utvecklare 1 har skapat den
-    // private final JwtAuthFilter jwtAuthFilter;
-
-    // TODO: Lägg till konstruktor när JwtAuthFilter är implementerad
-    // @Autowired
-    // public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
-    //     this.jwtAuthFilter = jwtAuthFilter;
-    // }
 
     /**
      * Konfigurerar säkerhetsfilterkedjan som avgör vem som får komma åt vad.
      * Här sätter jag upp rollbaserad åtkomstkontroll och säkerhetsheaders.
+     * JWT-filter kommer att läggas till av Utvecklare 2 senare.
      *
      * Publika endpoints (som Swagger och autentisering) får alla komma åt,
      * medan admin-endpoints kräver ADMIN-roll och user-endpoints kräver USER eller ADMIN.
@@ -54,14 +45,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // Deaktiverar CSRF eftersom vi kommer använda JWT (stateless)
+                // Deaktiverar CSRF eftersom vi använder JWT (stateless och token-baserad autentisering)
                 .csrf(csrf -> csrf.disable())
 
-                // Gör API:et stateless - ingen session-hantering
+                // Gör API:et stateless - ingen session-hantering behövs med JWT
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Konfigurerar säkerhetsheaders med korrekt syntax
+                // Konfigurerar säkerhetsheaders för skydd mot vanliga attacker
                 .headers(headers -> headers
                         // Cache-Control headers för säker caching
                         .cacheControl(cache -> cache.disable())
@@ -75,22 +66,22 @@ public class SecurityConfig {
                         // XSS Protection
                         .xssProtection(xss -> {})
 
-                        // HTTP Strict Transport Security (HSTS) - uppdaterad utan includeSubdomains
+                        // HTTP Strict Transport Security (HSTS) - tvingar HTTPS
                         .httpStrictTransportSecurity(hsts -> hsts
-                                .maxAgeInSeconds(Duration.ofDays(365).toSeconds())) // 1 år, utan subdomains
+                                .maxAgeInSeconds(Duration.ofDays(365).toSeconds())) // 1 år
 
-                        // Referrer Policy - ny syntax utan deprecated metod
+                        // Referrer Policy - kontrollerar vilken referrer-information som skickas
                         .addHeaderWriter(new ReferrerPolicyHeaderWriter(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 )
 
-                // Auktorisering med Lambda-syntax
+                // Auktorisering med rollbaserad åtkomstkontroll
                 .authorizeHttpRequests(auth -> auth
                         // Publika endpoints - ingen autentisering krävs
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
 
-                        // Swagger dokumentation - tillgänglig för alla
+                        // Swagger dokumentation - tillgänglig för alla under utveckling
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/swagger-ui/index.html", "/swagger-ui/favicon-32x32.png").permitAll()
@@ -105,21 +96,23 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // TODO: Lägg till JWT-filter när Utvecklare 1 har implementerat det
-                // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // TODO: JWT-filter kommer här när Utvecklare 2 implementerar det
+                // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .build();
     }
 
     /**
      * Skapar BCrypt-lösenordskryptering för säker hantering av lösenord.
-     * BCrypt är branschstandard och mycket säkrare än att lagra lösenord i klartext.
-     * Den har inbyggt salt och kan konfigurera hur "dyr" krypteringen ska vara.
+     * BCrypt är en av de säkraste algoritmerna för lösenordshashing och
+     * rekommenderas av OWASP för produktion.
      *
-     * @return PasswordEncoder med BCrypt-algoritm för lösenordshashing
+     * @return PasswordEncoder-implementation med BCrypt-algoritm för lösenordskryptering
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    // TODO: AuthenticationManager kommer här när Utvecklare 2 implementerar JWT
 }

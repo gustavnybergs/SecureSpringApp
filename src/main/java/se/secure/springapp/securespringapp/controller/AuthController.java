@@ -3,6 +3,7 @@ package se.secure.springapp.securespringapp.controller;
 import se.secure.springapp.securespringapp.dto.ErrorResponse;
 import se.secure.springapp.securespringapp.dto.LoginRequest;
 import se.secure.springapp.securespringapp.dto.RegisterRequest;
+// TODO: import se.secure.springapp.securespringapp.security.JwtTokenProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,7 +12,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -22,13 +28,16 @@ import java.util.Map;
  * Jag förberedde denna för User Story #8 men Utvecklare 1 ska implementera
  * själva JWT-logiken och databasintegrationerna.
  *
- * Just nu returnerar alla endpoints placeholder-svar, men jag har lagt till
+ * Utvecklare 2 (Jawhar) har nu implementerat JWT-funktionalitet med
+ * AuthenticationManager och JwtTokenProvider för login-endpointen.
+ *
+ * Just nu returnerar de flesta endpoints placeholder-svar, men jag har lagt till
  * komplett Swagger-dokumentation så vi vet exakt vad som ska implementeras.
  * Alla säkerhetsaspekter är planerade i JavaDoc och @Operation-annotationerna.
  *
- TODO: Implementeras av Utvecklare 1 - JWT och autentiseringslogik
+ * TODO: Implementeras av Utvecklare 1 - JWT och autentiseringslogik (delvis klart)
  *
- * @author Utvecklare 3 (förberedelse), Utvecklare 1 (implementation)
+ * @author Utvecklare 3 (förberedelse), Utvecklare 2 (JWT-implementation), Utvecklare 1 (resterande)
  * @version 1.0
  * @since 2025-06-09
  */
@@ -37,14 +46,13 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Endpoints för användarautentisering och registrering")
 public class AuthController {
 
-    /**
-     * Registrerar nya användare i systemet med email och lösenord.
-     * Utvecklare 1 ska implementera BCrypt-hashing och databasintegration.
-     * Jag har förberett all validering och felhantering i Swagger-docs.
-     *
-     * @param request användarens registreringsdata (email, lösenord, namn)
-     * @return ResponseEntity med bekräftelse eller felmeddelande
-     */
+    // TODO: Lägg till när JWT-klasser är implementerade
+    // @Autowired
+    // private AuthenticationManager authManager;
+
+    // @Autowired
+    // private JwtTokenProvider jwtTokenProvider;
+
     @Operation(
             summary = "Registrera ny användare",
             description = """
@@ -187,18 +195,18 @@ public class AuthController {
             )
             @Valid @RequestBody LoginRequest request) {
 
-        // TODO: Implementeras av Utvecklare 1
-        // 1. Hitta användare baserat på email
-        // 2. Verifiera lösenord med BCrypt
-        // 3. Generera JWT-token med användarinfo
-        // 4. Logga lyckad inloggning
-        // 5. Returnera token och användardata
+        // TODO: Implementera Jawhars JWT-logic när klasserna finns
+        // Authentication authentication = authManager.authenticate(
+        //         new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        // );
+        // String token = jwtTokenProvider.generateToken((UserDetails) authentication.getPrincipal());
 
+        // Placeholder response tills JWT är implementerat
         return ResponseEntity.ok(Map.of(
-                "message", "User login endpoint - Implementeras av Utvecklare 1",
-                "todo", "JWT generering och lösenordsverifiering",
-                "dummyToken", "jwt-token-placeholder",
-                "receivedEmail", request.getEmail()
+                "message", "Login endpoint - JWT implementation från Jawhar kommer här",
+                "todo", "Väntar på JwtTokenProvider och AuthenticationManager",
+                "receivedEmail", request.getEmail(),
+                "placeholder_token", "jwt-will-be-generated-here"
         ));
     }
 
@@ -254,7 +262,7 @@ public class AuthController {
             )
             @RequestHeader("Authorization") String authHeader) {
 
-        // TODO: Implementeras av Utvecklare 1
+        // TODO: Implementera token refresh med JwtTokenProvider
         // 1. Extrahera token från Authorization header
         // 2. Validera token-signatur och giltighet
         // 3. Kontrollera att användaren fortfarande är aktiv
@@ -262,7 +270,7 @@ public class AuthController {
         // 5. Invalidera gamla token (optional)
 
         return ResponseEntity.ok(Map.of(
-                "message", "Token refresh endpoint - Implementeras av Utvecklare 1",
+                "message", "Token refresh endpoint - Implementeras med JwtTokenProvider",
                 "todo", "JWT validering och förnyelse",
                 "receivedHeader", authHeader.substring(0, Math.min(50, authHeader.length())) + "..."
         ));
@@ -317,14 +325,14 @@ public class AuthController {
             )
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        // TODO: Implementeras av Utvecklare 1
+        // TODO: Implementera logout med token blacklisting
         // 1. Extrahera token från header
         // 2. Lägg till token på blacklist
         // 3. Logga utloggningshändelse
         // 4. Returnera bekräftelse
 
         return ResponseEntity.ok(Map.of(
-                "message", "User logout endpoint - Implementeras av Utvecklare 1",
+                "message", "User logout endpoint - Implementeras med token blacklisting",
                 "todo", "Token blacklisting och säkerhetsloggning",
                 "timestamp", System.currentTimeMillis()
         ));
@@ -375,13 +383,13 @@ public class AuthController {
     @GetMapping("/validate")
     public ResponseEntity<?> validateToken() {
 
-        // TODO: Implementeras av Utvecklare 1
+        // TODO: Implementera med SecurityContext från JWT-filter
         // 1. Token valideras automatiskt av JWT-filter
         // 2. Om vi kommer hit är token giltig
         // 3. Returnera användarinfo från SecurityContext
 
         return ResponseEntity.ok(Map.of(
-                "message", "Token validation endpoint - Implementeras av Utvecklare 1",
+                "message", "Token validation endpoint - Använder SecurityContext",
                 "todo", "JWT validering och användardata från SecurityContext",
                 "valid", true
         ));

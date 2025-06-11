@@ -1,20 +1,26 @@
-
 package se.secure.springapp.securespringapp.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception som kastas när en användare med specificerat ID inte kan hittas.
  * Denna exception ärver från RuntimeException enligt projektuppgiftens krav
  * och hanteras av GlobalExceptionHandler för att returnera HTTP 404 Not Found.
  *
+ * Utvecklare 2 (Jawhar) har lagt till @ResponseStatus(HttpStatus.NOT_FOUND) annotation
+ * som får Spring att automatiskt returnera 404 Not Found som fallback.
+ *
  * Används i situationer där:
  * - En användare försöker accediera en icke-existerande användar-ID
  * - CRUD-operationer refererar till ogiltiga användarreferenser
  * - Admin-funktioner försöker modifiera icke-existerande användare
  *
- * @author Utvecklare 3
+ * @author Utvecklare 3 (grundläggande), Utvecklare 2 (@ResponseStatus)
  * @version 1.0
  * @since 2024-06-09
  */
+@ResponseStatus(HttpStatus.NOT_FOUND) // Jawhars annotation för automatisk 404-status
 public class UserNotFoundException extends RuntimeException {
 
     /**
@@ -27,12 +33,12 @@ public class UserNotFoundException extends RuntimeException {
 
     /**
      * Skapar en UserNotFoundException med anpassat felmeddelande.
-     * Tillåter specifika felmeddelanden baserat på kontexten där exception kastas.
+     * Detta är Jawhars implementation från merge-konflikten.
      *
      * @param message detaljerat felmeddelande som beskriver varför användaren inte hittades
      */
     public UserNotFoundException(String message) {
-        super(message);
+        super(message); // Jawhars implementation - skickar meddelandet till RuntimeException
     }
 
     /**
