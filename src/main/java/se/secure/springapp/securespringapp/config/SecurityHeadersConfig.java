@@ -10,7 +10,7 @@ import se.secure.springapp.securespringapp.filter.SecurityHeadersFilter;
  * Jag behövde denna för att Spring Boot ska veta att vårt filter ska användas.
  * Den kompletterar Spring Security:s inbyggda säkerhetsheaders med våra egna.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

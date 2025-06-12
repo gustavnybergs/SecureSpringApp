@@ -60,7 +60,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- JWT - Använd Elie's nyare version (0.12.5) -->
+        <!-- JWT - Använd Elies nyare version (0.12.5) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -96,6 +96,12 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.2.0</version>
+        </dependency>
+        <!-- Lombook -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

@@ -10,7 +10,7 @@ package se.secure.springapp.securespringapp.exception;
  * - Rolluppdateringar försöker sätta icke-existerande roller
  * - Validering av rollbaserad åtkomst misslyckas
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2024-06-09
  */
@@ -36,7 +36,7 @@ public class InvalidRoleException extends RuntimeException {
 
     /**
      * Skapar en InvalidRoleException med information om den ogiltiga rollen.
-     * Bekvämlighetsmetod som inkluderar den specifika roll som var ogiltig.
+     * Metod som inkluderar den specifika roll som var ogiltig.
      *
      * @param invalidRole den roll som inte kunde valideras
      */

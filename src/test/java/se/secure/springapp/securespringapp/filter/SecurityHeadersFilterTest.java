@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Enhetstester för SecurityHeadersFilter.
  * Testar att filtret lägger till rätt säkerhetsheaders på HTTP-svar.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-10
  */

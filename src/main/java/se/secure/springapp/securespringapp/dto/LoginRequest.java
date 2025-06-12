@@ -12,7 +12,7 @@ import jakarta.validation.constraints.NotBlank;
  * Innehåller email och lösenord med automatisk validering via Bean Validation.
  * Swagger-annotationer gör att denna syns korrekt i API-dokumentationen.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Denna controller kan tas bort när riktiga controllers är implementerade,
  * men den är jättebra för utveckling och testning av felhantering.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

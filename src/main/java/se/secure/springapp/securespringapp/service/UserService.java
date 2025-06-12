@@ -11,7 +11,7 @@ import java.util.HashSet;
 /**
  * Service som hanterar användarrelaterade operationer.
  *
- * Kombinerar Gustav's registreringslogik med Elie's utökade funktionalitet.
+ * Kombinerar Gustavs registreringslogik med Elies utökade funktionalitet.
  * ÄNDRING: Tog bort UserDetailsService-implementationen för att lösa bean-konflikt.
  */
 @Service
@@ -26,7 +26,7 @@ public class UserService {
     }
 
     /**
-     * Registrerar ny användare med användarnamn och lösenord (Gustav's version).
+     * Registrerar ny användare med användarnamn och lösenord (Gustavs version).
      */
     public User registerNewUser(String username, String password, boolean consentGiven) {
         if (userRepository.findByUsername(username).isPresent()) {
@@ -44,7 +44,7 @@ public class UserService {
     }
 
     /**
-     * Registrerar ny användare (Elie's förenklad version).
+     * Registrerar ny användare Elies version.
      */
     public User registerUser(String username, String rawPassword) {
         if (userRepository.existsByUsername(username)) {

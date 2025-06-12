@@ -17,12 +17,12 @@ import java.util.Map;
 
 /**
  * Global felhanterare för REST-controllers.
- * Kombinerar Jawhar's UserNotFoundException-hantering med Utvecklare 3's säkerhetsloggning.
+ * Kombinerar Jawhars UserNotFoundException-hantering med Gustavs säkerhetsloggning.
  *
  * Centraliserar felhantering för säkerhet, autentisering och allmänna applikationsfel.
  * Loggar säkerhetshändelser för övervakning och incident response.
  *
- * @author Jawhar (UserNotFoundException), Utvecklare 3 (säkerhetsloggning och utökad felhantering)
+ * @author Jawhar (UserNotFoundException), Gustav (säkerhetsloggning och utökad felhantering)
  * @version 2.0 - Kombinerad implementation
  * @since 2025-06-11
  */
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY");
 
     /**
-     * Hanterar UserNotFoundException från Jawhar's implementation.
+     * Hanterar UserNotFoundException från Jawhars implementation.
      * Returnerar 404 Not Found när användare inte hittas i systemet.
      *
      * @param ex Undantaget som kastades

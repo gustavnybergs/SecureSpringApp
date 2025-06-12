@@ -16,7 +16,7 @@ import java.util.Map;
  * Använd browser dev tools (F12 -> Network) för att se att headers som
  * X-Frame-Options, CSP och andra säkerhetsheaders faktiskt sätts.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
  * och adminaktiviteter eftersom det var det som krävdes för projektet.
  * Alla metoder kastar IllegalArgumentException om obligatoriska parametrar saknas.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

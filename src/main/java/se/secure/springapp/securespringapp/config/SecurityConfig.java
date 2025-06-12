@@ -23,13 +23,13 @@ import java.util.Arrays;
 
 /**
  * Huvudkonfiguration för Spring Security i applikationen.
- * Kombinerar Jawhar's JWT-autentisering, Gustav's säkerhetsheaders och Elie's uppdateringar.
+ * Kombinerar Jawhars JWT-autentisering, Gustavs säkerhetsheaders och Elies uppdateringar.
  * UPPDATERAD: Lagt till CORS-support för React frontend på port 3000.
  *
  * Här definieras rollbaserad åtkomstkontroll, JWT-integration, säkerhetsheaders
  * och CORS-konfiguration för skydd mot vanliga webbattacker.
  *
- * @author Jawhar (JWT-autentisering), Gustav (säkerhetsheaders), Elie (filter path + databas), Utvecklare 3 (CORS)
+ * @author Jawhar (JWT-autentisering), Gustav (säkerhetsheaders, CORS), Elie (filter path + databas),
  * @version 4.0 - Lagt till CORS för React frontend
  * @since 2025-06-11
  */
@@ -68,11 +68,11 @@ public class SecurityConfig {
     /**
      * Konfigurerar säkerhetsfilterkedjan med rollbaserade regler, JWT-filter, säkerhetsheaders och CORS.
      *
-     * Kombinerar Jawhar's JWT-implementation med Gustav's omfattande säkerhetsheaders,
-     * Elie's uppdaterade filter-sökvägar och CORS-support för React frontend.
+     * Kombinerar Jawhars JWT-implementation med Gustavs säkerhetsheaders,
+     * Elies uppdaterade filter-sökvägar och CORS-support för React frontend.
      *
      * @param http HttpSecurity-objektet för att konfigurera säkerhetsinställningar
-     * @return En komplett SecurityFilterChain med JWT-autentisering, säkerhetsheaders och CORS
+     * @return komplett SecurityFilterChain med JWT-autentisering, säkerhetsheaders och CORS
      * @throws Exception om konfigurationen misslyckas
      */
     @Bean
@@ -123,8 +123,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/index.html", "/swagger-ui/favicon-32x32.png").permitAll()
 
                         // USER endpoints - kräver USER eller ADMIN roll
-                        .requestMatchers("/api/user/**").hasAnyAuthority("USER", "ADMIN")
-                        .requestMatchers("/api/notes/**").hasAnyAuthority("USER", "ADMIN") // Jawhar's NoteController
+                        .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/notes/**").hasAnyAuthority("USER", "ADMIN") // Jawhars NoteController
 
                         // ADMIN endpoints - kräver ADMIN roll
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
@@ -133,7 +133,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // JWT-filtret - körs FÖRE Spring Securitys standardfilter (Elie's uppdaterade filter path)
+                // JWT-filtret - körs FÖRE Spring Securitys standardfilter (Elies uppdaterade filter path)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .build();

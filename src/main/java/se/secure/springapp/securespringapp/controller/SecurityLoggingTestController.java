@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * TODO: Väntar på att Utvecklare 2 implementerar SecurityEventLogger
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

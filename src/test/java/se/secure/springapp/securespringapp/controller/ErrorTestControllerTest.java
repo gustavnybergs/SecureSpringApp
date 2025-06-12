@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * MockMvc-tester för ErrorTestController.
  * Testar att alla fel hanteras korrekt av GlobalExceptionHandler.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-10
  */
