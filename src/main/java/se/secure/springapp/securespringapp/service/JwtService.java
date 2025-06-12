@@ -2,6 +2,7 @@ package se.secure.springapp.securespringapp.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,8 +14,8 @@ import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
- * Service för hantering av JWT-token operationer.
- * Tillhandahåller funktionalitet för att generera och validera JSON Web Tokens.
+ * Service för hantering av JWT-token.
+ * Ansvarar för att skapa och validera JSON Web Tokens.
  */
 @Service
 public class JwtService {
@@ -25,8 +26,8 @@ public class JwtService {
     /**
      * Genererar en JWT-token för en autentiserad användare.
      *
-     * @param authentication autentiseringsobjektet som innehåller användardetaljer
-     * @return en signerad JWT-token som sträng
+     * @param authentication autentiseringsobjekt med användarens detaljer
+     * @return signerad JWT-token som sträng
      */
     public String generateToken(Authentication authentication) {
         var authorities = authentication.getAuthorities().stream()
@@ -34,10 +35,10 @@ public class JwtService {
                 .collect(Collectors.toList());
 
         return Jwts.builder()
-                .subject(authentication.getName())
+                .setSubject(authentication.getName())
                 .claim("authorities", authorities)
-                .expiration(new Date(System.currentTimeMillis() + 3600000))
-                .signWith(key)
+                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1 timme
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -45,13 +46,13 @@ public class JwtService {
      * Extraherar claims från en JWT-token.
      *
      * @param token JWT-token som ska parsas
-     * @return claims som finns i token
+     * @return claims i token
      */
     public Claims extractClaims(String token) {
         return Jwts.parser()
-                .verifyWith((javax.crypto.SecretKey) key)
+                .setSigningKey(key)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

@@ -1,5 +1,5 @@
+// UserController.java
 package se.secure.springapp.securespringapp.controller;
-
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import se.secure.springapp.securespringapp.service.UserService;
 
 /**
- * REST-controller för användarspecifika operationer.
- * Endpoints i denna controller ska vara tillgängliga för användare med rollen USER eller ADMIN.
+ * Controller för användarspecifika endpoints.
+ * Endpoints är tillgängliga för rollerna USER och ADMIN.
  */
 @RestController
 @RequestMapping("/api/user")
@@ -16,15 +16,19 @@ public class UserController {
 
     private final UserService userService;
 
-    //  Konstruktor för att injicera UserService
+    /**
+     * Konstruktor för injektion av UserService.
+     *
+     * @param userService service för användarhantering
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     /**
-     * Hämtar ett användar- eller administratörsspecifikt meddelande.
+     * Testendpoint för användar- och adminåtkomst.
      *
-     * @return Ett ResponseEntity med ett välkomstmeddelande.
+     * @return hälsningsmeddelande för inloggad användare eller admin
      */
     @GetMapping("/hello")
     public ResponseEntity<String> getUserHello() {
@@ -32,10 +36,10 @@ public class UserController {
     }
 
     /**
-     * Tar bort den inloggade användaren från systemet.
+     * Tar bort den inloggade användarens konto.
      *
-     * @param auth Authentication-objektet från Spring Security
-     * @return 204 No Content om borttagning lyckas
+     * @param auth autentiseringsobjekt från Spring Security
+     * @return HTTP 204 No Content vid lyckad borttagning
      */
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteOwnAccount(Authentication auth) {
