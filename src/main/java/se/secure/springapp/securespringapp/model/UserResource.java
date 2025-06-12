@@ -14,7 +14,7 @@ import se.secure.springapp.securespringapp.model.User;
  *
  * Exempel på användning: dokument, filer, anteckningar, inställningar etc.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

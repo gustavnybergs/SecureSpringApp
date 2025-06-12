@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * JWT Token Provider Service för att hantera JWT (JSON Web Tokens).
- * Kombinerar Jawhar's professionella struktur med Elie's avancerade konfiguration.
+ * Kombinerar Jawhars struktur med Elies konfiguration.
  *
  * Denna service ansvarar för att generera, validera och extrahera information från JWT-tokens
  * för säker autentisering i REST API:et. Stödjer både enkel UserDetails-baserad generering
@@ -36,7 +36,7 @@ public class JwtTokenProvider {
 
     /**
      * Konstruktor med konfigurerbar secret och expiration från application.properties.
-     * Elie's förbättring för produktionsmiljö istället för hårdkodade värden.
+     * Elies förbättring för produktionsmiljö istället för hårdkodade värden.
      *
      * @param secret hemlig nyckel från application.properties (minst 32 tecken)
      * @param expirationMs token-giltighetstid i millisekunder
@@ -54,7 +54,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Genererar en JWT-token för en given användare (Jawhar's ursprungliga metod).
+     * Genererar en JWT-token för en given användare (Jawhars ursprungliga metod).
      * Tokenen innehåller användarnamn som 'subject' och användarens roller som en 'claim'.
      * Denna metod är kompatibel med standard Spring Security UserDetails.
      *
@@ -87,7 +87,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Genererar JWT-token med userId och roller (Elie's avancerade metod).
+     * Genererar JWT-token med userId och roller (Elies metod).
      * Denna metod ger full kontroll över token-innehållet och är optimerad
      * för användning med databas-ID:n och specifika rolluppsättningar.
      *
@@ -112,7 +112,7 @@ public class JwtTokenProvider {
 
     /**
      * Extraherar användarnamnet från en JWT-token.
-     * Stödjer både Jawhar's format (subject) och Elie's format (username claim).
+     * Stödjer både Jawhars format (subject) och Elies format (username claim).
      *
      * @param token Den JWT-sträng som ska parsas
      * @return Användarnamnet från tokenen
@@ -120,19 +120,19 @@ public class JwtTokenProvider {
     public String getUsername(String token) {
         Claims claims = getClaims(token);
 
-        // Försök först med Elie's format (username som claim)
+        // Försök först med Elies format (username som claim)
         String username = claims.get("username", String.class);
         if (username != null) {
             return username;
         }
 
-        // Fallback till Jawhar's format (username som subject)
+        // Fallback till Jawhars format (username som subject)
         return claims.getSubject();
     }
 
     /**
-     * Extraherar userId från JWT-token (Elie's metod).
-     * Använder subject-fältet som innehåller userId för tokens skapade med avancerade metoden.
+     * Extraherar userId från JWT-token (Elies metod).
+     * Använder subject-fältet som innehåller userId för tokens skapade med metoden.
      *
      * @param token JWT-token att parsa
      * @return användarens ID som Long
@@ -144,7 +144,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Extraherar listan med roller från en JWT-token (Jawhar's metod).
+     * Extraherar listan med roller från en JWT-token (Jawhars metod).
      * Returnerar roller som en lista av strängar för kompatibilitet med Spring Security.
      *
      * @param token Den JWT-sträng som ska parsas
@@ -155,7 +155,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Extraherar roller som Set (Elie's metod).
+     * Extraherar roller som Set (Elies metod).
      * Användbar när du behöver en uppsättning unika roller utan dubbletter.
      *
      * @param token JWT-token att parsa
@@ -169,7 +169,7 @@ public class JwtTokenProvider {
 
     /**
      * Validerar en JWT-token. Kontrollerar om tokenen är giltig och inte utgången.
-     * Jawhar's implementation med förbättrad felhantering.
+     * Jawhars implementation med förbättrad felhantering.
      *
      * @param token Den JWT-sträng som ska valideras
      * @return true om tokenen är giltig, false annars

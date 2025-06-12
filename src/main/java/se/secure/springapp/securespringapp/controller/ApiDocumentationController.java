@@ -19,7 +19,7 @@ import java.util.Map;
  * Dessa endpoints är publika så utvecklare kan snabbt kolla systemstatus
  * och hitta dokumentationen utan att behöva autentisera sig först.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

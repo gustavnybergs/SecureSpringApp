@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
  * Swagger UI blir tillgängligt på /swagger-ui.html så man kan testa API:et direkt
  * i webbläsaren. Riktigt smidigt för utveckling och testning.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */
@@ -73,15 +73,14 @@ public class OpenApiConfig {
 
     /**
      * Skapar kontaktinformation för API-dokumentationen.
-     * Används av API-konsumenter för att få support eller rapportera problem.
      *
      * @return Contact-objekt med utvecklarens kontaktuppgifter
      */
     private Contact createContactInfo() {
         return new Contact()
-                .name("Utvecklare 3")
-                .email("developer3@securespringapp.se")
-                .url("https://github.com/SecureSpringApp");
+                .name("Gustav Nyberg")
+                .email("gustav.nyberg@securespringapp.se")
+                .url("https://github.com/gustavnyberg");
     }
 
     /**

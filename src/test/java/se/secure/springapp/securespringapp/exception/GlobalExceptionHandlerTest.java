@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Testar att olika exceptions hanteras korrekt och returnerar rätt HTTP-statuskoder.
  * FIXAD VERSION - Använder korrekt WebRequest interface och rätta metodnamn.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 2.0 - Fixad för att matcha aktuell GlobalExceptionHandler
  * @since 2025-06-11
  */

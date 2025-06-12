@@ -4,63 +4,59 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Anpassat undantag för när en användare inte hittas i systemet.
- * Kombinerar Jawhar's @ResponseStatus-annotation med Utvecklare 3's utökade konstruktorer.
+ * Exception som kastas när en användare inte hittas i systemet.
+ * Kombinerar Jawhars @ResponseStatus-annotation med Gustavs utökade konstruktorer.
  *
- * Används för att signalera 404 Not Found HTTP-svar när användaroperationer misslyckas
- * på grund av att användaren inte existerar i databasen.
+ * Returnerar automatiskt 404 Not Found när denna exception kastas.
  *
- * @author Jawhar (@ResponseStatus-annotation), Utvecklare 3 (utökade konstruktorer)
+ * @author Jawhar
+ * @author Gustav
  * @version 2.0 - Kombinerad implementation
  * @since 2025-06-11
  */
-@ResponseStatus(HttpStatus.NOT_FOUND) // Jawhar's annotation - returnerar automatiskt 404 Not Found
+@ResponseStatus(HttpStatus.NOT_FOUND)
 public class UserNotFoundException extends RuntimeException {
 
     /**
-     * Standard konstruktor med anpassat felmeddelande.
-     * Jawhar's ursprungliga implementation.
+     * Jawhars ursprungliga konstruktor.
      *
-     * @param message Beskrivande meddelande om vad som gick fel
+     * @param message felmeddelande
      */
     public UserNotFoundException(String message) {
         super(message);
     }
 
     /**
-     * Konstruktor med meddelande och orsakskedja för bättre felsökning.
-     * Utvecklare 3's tillägg för mer detaljerad felhantering.
+     * Gustavs tillägg för bättre felhantering.
      *
-     * @param message Beskrivande meddelande om vad som gick fel
-     * @param cause Underliggande orsak till felet (t.ex. databasfel)
+     * @param message felmeddelande
+     * @param cause orsak till felet
      */
     public UserNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Konstruktor med fördefinierat meddelande baserat på användar-ID.
-     * Utvecklare 3's bekvämlighetsmetod för vanliga fall.
+     * Konstruktor för användar-ID.
      *
-     * @param userId ID för användaren som inte kunde hittas
+     * @param userId ID för användaren som inte hittades
      */
     public UserNotFoundException(Long userId) {
         super("User with ID " + userId + " not found");
     }
 
     /**
-     * Konstruktor med fördefinierat meddelande baserat på användarnamn.
-     * Utvecklare 3's bekvämlighetsmetod för autentiseringsfel.
+     * Konstruktor för användarnamn eller anpassat meddelande.
      *
-     * @param username Användarnamnet som inte kunde hittas
+     * @param username användarnamn som inte hittades
+     * @param isUsername true om det är användarnamn, false för annat meddelande
      */
     public UserNotFoundException(String username, boolean isUsername) {
         super(isUsername ? "User with username '" + username + "' not found" : username);
     }
 
     /**
-     * Standard konstruktor utan meddelande.
-     * Utvecklare 3's tillägg för situationer där meddelandet sätts senare.
+     * Default konstruktor med standardmeddelande.
      */
     public UserNotFoundException() {
         super("User not found");

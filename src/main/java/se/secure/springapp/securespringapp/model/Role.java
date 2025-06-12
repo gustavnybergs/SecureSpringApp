@@ -12,7 +12,7 @@ package se.secure.springapp.securespringapp.model;
  * Alla nya användare får USER-rollen automatiskt vid registrering.
  * ADMIN-rollen ges endast manuellt av andra administratörer.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */
