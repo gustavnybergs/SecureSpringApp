@@ -43,14 +43,12 @@ class GlobalExceptionHandlerTest {
         UserNotFoundException exception = new UserNotFoundException("Användare hittades inte");
 
         // Act
-        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleUserNotFoundException(exception, webRequest);
+        ResponseEntity<String> response = exceptionHandler.handleUserNotFoundException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(404, response.getBody().get("status"));
-        assertEquals("Användare hittades inte", response.getBody().get("message"));
-        assertNotNull(response.getBody().get("timestamp"));
+        assertEquals("Användare hittades inte", response.getBody());
     }
 
     @Test
@@ -136,27 +134,25 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void allExceptionHandlers_ShouldIncludeTimestamp() {
-        // Arrange
-        UserNotFoundException exception = new UserNotFoundException("Test");
+        // Arrange - testa med en annan exception som fortfarande returnerar Map
+        AccessDeniedException exception = new AccessDeniedException("Åtkomst nekad");
 
         // Act
-        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleUserNotFoundException(exception, webRequest);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAccessDeniedException(exception, webRequest);
 
         // Assert
         assertNotNull(response.getBody().get("timestamp"));
-        // Kontrollera att timestamp finns och är ett rimligt värde
         Object timestamp = response.getBody().get("timestamp");
         assertNotNull(timestamp);
-        // Vi bryr oss bara om att timestamp finns, inte vilken typ det är
     }
 
     @Test
     void allExceptionHandlers_ShouldIncludePath() {
-        // Arrange
-        UserNotFoundException exception = new UserNotFoundException("Test");
+        // Arrange - testa med en annan exception som fortfarande returnerar Map
+        AccessDeniedException exception = new AccessDeniedException("Åtkomst nekad");
 
         // Act
-        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleUserNotFoundException(exception, webRequest);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAccessDeniedException(exception, webRequest);
 
         // Assert
         assertNotNull(response.getBody().get("path"));
