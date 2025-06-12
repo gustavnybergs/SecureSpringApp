@@ -1,5 +1,6 @@
 package se.secure.springapp.securespringapp.service;
 
+import se.secure.springapp.securespringapp.exception.UserNotFoundException;
 import se.secure.springapp.securespringapp.model.User;
 import se.secure.springapp.securespringapp.repository.UserRepository;
 import se.secure.springapp.securespringapp.model.Role;
@@ -75,5 +76,9 @@ public class UserService {
     public void deleteUserByUsername(String username) {
         User user = findUserByUsername(username);
         userRepository.delete(user);
+    }
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Användare med ID " + id + " hittades inte."));
     }
 }

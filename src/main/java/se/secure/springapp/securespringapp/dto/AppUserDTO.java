@@ -1,7 +1,7 @@
 package se.secure.springapp.securespringapp.dto;
 
-
 import se.secure.springapp.securespringapp.entity.AppUser;
+import se.secure.springapp.securespringapp.model.User;
 
 public class AppUserDTO {
 
@@ -10,19 +10,22 @@ public class AppUserDTO {
     private String role;
     private boolean consentGiven;
 
-    // Tom konstruktor krävs av Spring
-    public AppUserDTO() {
-    }
+    public AppUserDTO() {}
 
-    // Används för att skapa DTO från AppUser
+    public AppUserDTO(User user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.role = user.getRoles().toString();
+        this.consentGiven = user.isConsentGiven();
+    }
     public AppUserDTO(AppUser user) {
         this.id = user.getId();
         this.username = user.getUsername();
-        this.role = user.getRole();
+        this.role = user.getRole(); // om det är en sträng
         this.consentGiven = user.isConsentGiven();
     }
 
-    // Getters
+
     public Long getId() {
         return id;
     }
@@ -39,7 +42,6 @@ public class AppUserDTO {
         return consentGiven;
     }
 
-    // Setters (också bra att ha för JSON-mappning)
     public void setId(Long id) {
         this.id = id;
     }
