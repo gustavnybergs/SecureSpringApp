@@ -1,12 +1,10 @@
 package se.secure.springapp.securespringapp.service;
-
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import se.secure.springapp.securespringapp.entity.AppUser;
 import se.secure.springapp.securespringapp.entity.Note;
 import se.secure.springapp.securespringapp.repository.AppUserRepository;
 import se.secure.springapp.securespringapp.repository.NoteRepository;
-
 import java.util.List;
 
 /**
@@ -15,7 +13,6 @@ import java.util.List;
  */
 @Service
 public class NoteService {
-
     private final NoteRepository noteRepo;
     private final AppUserRepository userRepo;
 
@@ -66,11 +63,11 @@ public class NoteService {
     public void deleteNote(String username, Long noteId) {
         Note note = noteRepo.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
-
+        
         if (!note.getOwner().getUsername().equals(username)) {
             throw new RuntimeException("Not authorized to delete this note");
         }
-
+        
         noteRepo.delete(note);
     }
 }

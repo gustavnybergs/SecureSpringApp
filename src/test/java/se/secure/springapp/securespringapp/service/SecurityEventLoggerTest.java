@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Enhetstester för SecurityEventLogger.
  * Testar att säkerhetsloggning fungerar korrekt och validerar parametrar.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-10
  */

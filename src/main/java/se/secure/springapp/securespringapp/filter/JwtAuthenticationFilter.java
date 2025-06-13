@@ -17,7 +17,7 @@ import java.io.IOException;
 
 /**
  * JWT Authentication Filter för att validera JWT tokens i HTTP requests.
- * Elie's implementation för User Story #12 - JWT-validering, uppdaterad för att använda
+ * Elies implementation för User Story #12 - JWT-validering, uppdaterad för att använda
  * den kombinerade JwtTokenProvider från service-paketet.
  *
  * Detta filter körs på varje HTTP request och kontrollerar om en giltig JWT token
@@ -27,7 +27,7 @@ import java.io.IOException;
  * Filtret hoppar över Swagger-dokumentation och andra publika endpoints för
  * att undvika onödiga valideringar på icke-skyddade resurser.
  *
- * @author Elie (Utvecklare 1) - ursprunglig implementation
+ * @author Elie
  * @author Gustav & Jawhar - kombinerad JwtTokenProvider integration
  * @version 2.0 - Uppdaterad för service-baserad JWT provider
  * @since 2025-06-11

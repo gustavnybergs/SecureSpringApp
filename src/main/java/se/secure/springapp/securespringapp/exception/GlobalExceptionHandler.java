@@ -17,12 +17,12 @@ import java.util.Map;
 
 /**
  * Global felhanterare för REST-controllers.
- * Kombinerar Jawhar's UserNotFoundException-hantering med Utvecklare 3's säkerhetsloggning.
+ * Kombinerar Jawhars UserNotFoundException-hantering med Gustavs säkerhetsloggning.
  *
  * Centraliserar felhantering för säkerhet, autentisering och allmänna applikationsfel.
  * Loggar säkerhetshändelser för övervakning och incident response.
  *
- * @author Jawhar (UserNotFoundException), Utvecklare 3 (säkerhetsloggning och utökad felhantering)
+ * @author Jawhar (UserNotFoundException), Gustav (säkerhetsloggning och utökad felhantering)
  * @version 2.0 - Kombinerad implementation
  * @since 2025-06-11
  */
@@ -33,19 +33,20 @@ public class GlobalExceptionHandler {
     private static final Logger securityLogger = LoggerFactory.getLogger("SECURITY");
 
     /**
-     * Hanterar UserNotFoundException från Jawhar's implementation.
-     * Returnerar 404 Not Found när användare inte hittas i systemet.
+     * Hanterar UserNotFoundException från Jawhars implementation.
+     * Jag behåller detaljerad loggning internt men returnerar bara felmeddelandet till klienten.
      *
-     * @param ex Undantaget som kastades
-     * @param request WebRequest-objektet med begäran-information
-     * @return ResponseEntity med felmeddelande och HTTP-status 404
+     * @param ex undantaget som kastades när användaren inte hittades
+     * @param request information om den inkommande HTTP-förfrågan
+     * @return felmeddelandet som sträng med 404-status
      */
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFoundException(
+    public ResponseEntity<String> handleUserNotFoundException(
             UserNotFoundException ex, WebRequest request) {
 
         logger.warn("User not found: {} - Request: {}", ex.getMessage(), request.getDescription(false));
 
+        // skapar fortfarande detaljerad error-info för loggning
         Map<String, Object> errorResponse = Map.of(
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.NOT_FOUND.value(),
@@ -54,7 +55,10 @@ public class GlobalExceptionHandler {
                 "path", request.getDescription(false).replace("uri=", "")
         );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        // Loggar detaljerna för debugging men skickar bara meddelandet till klienten
+        logger.debug("Detailed error response: {}", errorResponse);
+
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     /**

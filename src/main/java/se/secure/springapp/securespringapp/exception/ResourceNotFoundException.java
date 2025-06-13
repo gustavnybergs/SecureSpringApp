@@ -12,7 +12,7 @@ package se.secure.springapp.securespringapp.exception;
  * Skillnaden mot UserNotFoundException är att denna är för användarens egna data,
  * medan UserNotFoundException är för själva användarkontot.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

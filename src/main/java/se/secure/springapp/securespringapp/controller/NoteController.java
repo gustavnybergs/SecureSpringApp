@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import se.secure.springapp.securespringapp.entity.Note;
 import se.secure.springapp.securespringapp.service.NoteService;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -29,7 +30,7 @@ public class NoteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteNote(@PathVariable Long id, Authentication auth) {
+    public ResponseEntity<?> deleteNote(@PathVariable Long id, Authentication auth) throws AccessDeniedException {
         noteService.deleteNote(auth.getName(), id);
         return ResponseEntity.noContent().build();
     }

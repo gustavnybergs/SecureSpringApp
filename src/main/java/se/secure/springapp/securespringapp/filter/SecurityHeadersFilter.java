@@ -19,7 +19,7 @@ import java.io.IOException;
  * Det här är viktigt för säkerheten, utan dessa headers är vi
  * sårbara för massa olika attacker som kan komprommettera användardata.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

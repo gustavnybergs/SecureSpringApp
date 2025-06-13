@@ -1,13 +1,13 @@
 package se.secure.springapp.securespringapp.dto;
 
 import se.secure.springapp.securespringapp.entity.AppUser;
+import se.secure.springapp.securespringapp.model.User;
 
 /**
  * Dataöverföringsobjekt (DTO) för användare.
  * Används för att exponera användaruppgifter utan känslig information som lösenord.
  */
 public class AppUserDTO {
-
     private Long id;
     private String username;
     private String role;
@@ -20,6 +20,18 @@ public class AppUserDTO {
     }
 
     /**
+     * Skapar en DTO baserat på en User-entitet.
+     *
+     * @param user User-entitet som ska omvandlas till DTO
+     */
+    public AppUserDTO(User user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.role = user.getRoles().toString();
+        this.consentGiven = user.isConsentGiven();
+    }
+
+    /**
      * Skapar en DTO baserat på en AppUser-entitet.
      *
      * @param user AppUser-entitet som ska omvandlas till DTO
@@ -27,7 +39,7 @@ public class AppUserDTO {
     public AppUserDTO(AppUser user) {
         this.id = user.getId();
         this.username = user.getUsername();
-        this.role = user.getRole();
+        this.role = user.getRole(); // om det är en sträng
         this.consentGiven = user.isConsentGiven();
     }
 

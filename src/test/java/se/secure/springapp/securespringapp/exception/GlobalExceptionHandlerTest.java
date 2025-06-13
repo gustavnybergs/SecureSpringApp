@@ -6,32 +6,35 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import se.secure.springapp.securespringapp.dto.ErrorResponse;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Enhetstester för GlobalExceptionHandler.
  * Testar att olika exceptions hanteras korrekt och returnerar rätt HTTP-statuskoder.
+ * FIXAD VERSION - Använder korrekt WebRequest interface och rätta metodnamn.
  *
- * @author Utvecklare 3
- * @version 1.0
- * @since 2025-06-10
+ * @author Gustav
+ * @version 2.0 - Fixad för att matcha aktuell GlobalExceptionHandler
+ * @since 2025-06-11
  */
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler exceptionHandler;
-    private MockHttpServletRequest request;
+    private WebRequest webRequest;
 
     @BeforeEach
     void setUp() {
         exceptionHandler = new GlobalExceptionHandler();
-        request = new MockHttpServletRequest();
-        request.setRequestURI("/api/test");
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.setRequestURI("/api/test");
+        webRequest = new ServletWebRequest(mockRequest);
     }
 
     @Test
@@ -40,13 +43,12 @@ class GlobalExceptionHandlerTest {
         UserNotFoundException exception = new UserNotFoundException("Användare hittades inte");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleUserNotFoundException(exception, request);
+        ResponseEntity<String> response = exceptionHandler.handleUserNotFoundException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(404, response.getBody().getStatus());
-        assertEquals("Användare hittades inte", response.getBody().getMessage());
+        assertEquals("Användare hittades inte", response.getBody());
     }
 
     @Test
@@ -55,13 +57,14 @@ class GlobalExceptionHandlerTest {
         AccessDeniedException exception = new AccessDeniedException("Åtkomst nekad");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleAccessDeniedException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAccessDeniedException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(403, response.getBody().getStatus());
-        assertTrue(response.getBody().getMessage().contains("behörighet"));
+        assertEquals(403, response.getBody().get("status"));
+        assertTrue(response.getBody().get("message").toString().contains("permission"));
+        assertNotNull(response.getBody().get("timestamp"));
     }
 
     @Test
@@ -70,47 +73,46 @@ class GlobalExceptionHandlerTest {
         AuthenticationException exception = new AuthenticationException("Autentisering misslyckades") {};
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleAuthenticationException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAuthenticationException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(401, response.getBody().getStatus());
-        assertTrue(response.getBody().getMessage().contains("Autentisering"));
+        assertEquals(401, response.getBody().get("status"));
+        assertEquals("Authentication Failed", response.getBody().get("error"));
+        assertNotNull(response.getBody().get("timestamp"));
     }
 
     @Test
-    void handleValidationException_ShouldReturn400WithFieldErrors() {
+    void handleBadCredentialsException_ShouldReturn401() {
         // Arrange
-        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "test");
-        bindingResult.addError(new FieldError("test", "email", "Email är obligatorisk"));
-
-        MethodArgumentNotValidException exception = new MethodArgumentNotValidException(null, bindingResult);
+        BadCredentialsException exception = new BadCredentialsException("Fel användaruppgifter");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleBadCredentialsException(exception, webRequest);
 
         // Assert
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(400, response.getBody().getStatus());
-        assertTrue(response.getBody().getMessage().contains("Valideringsfel"));
-        assertTrue(response.getBody().getMessage().contains("email"));
+        assertEquals(401, response.getBody().get("status"));
+        assertEquals("Invalid Credentials", response.getBody().get("error"));
+        assertNotNull(response.getBody().get("timestamp"));
     }
 
     @Test
-    void handleRuntimeException_ShouldReturn500() {
+    void handleGenericException_ShouldReturn500() {
         // Arrange
-        RuntimeException exception = new RuntimeException("Oväntat fel");
+        Exception exception = new RuntimeException("Oväntat fel");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleRuntimeException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleGenericException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(500, response.getBody().getStatus());
-        assertTrue(response.getBody().getMessage().contains("internt fel"));
+        assertEquals(500, response.getBody().get("status"));
+        assertEquals("Internal Server Error", response.getBody().get("error"));
+        assertNotNull(response.getBody().get("timestamp"));
     }
 
     @Test
@@ -119,24 +121,41 @@ class GlobalExceptionHandlerTest {
         IllegalArgumentException exception = new IllegalArgumentException("Ogiltiga parametrar");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleIllegalArgumentException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleIllegalArgumentException(exception, webRequest);
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertEquals(400, response.getBody().getStatus());
-        assertTrue(response.getBody().getMessage().contains("Ogiltiga parametrar"));
+        assertEquals(400, response.getBody().get("status"));
+        assertEquals("Bad Request", response.getBody().get("error"));
+        assertTrue(response.getBody().get("message").toString().contains("Ogiltiga parametrar"));
+        assertNotNull(response.getBody().get("timestamp"));
     }
 
     @Test
-    void allExceptions_ShouldHaveTimestamp() {
-        // Arrange
-        UserNotFoundException exception = new UserNotFoundException("Test");
+    void allExceptionHandlers_ShouldIncludeTimestamp() {
+        // Arrange - testa med en annan exception som fortfarande returnerar Map
+        AccessDeniedException exception = new AccessDeniedException("Åtkomst nekad");
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleUserNotFoundException(exception, request);
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAccessDeniedException(exception, webRequest);
 
         // Assert
-        assertNotNull(response.getBody().getTimestamp());
+        assertNotNull(response.getBody().get("timestamp"));
+        Object timestamp = response.getBody().get("timestamp");
+        assertNotNull(timestamp);
+    }
+
+    @Test
+    void allExceptionHandlers_ShouldIncludePath() {
+        // Arrange - testa med en annan exception som fortfarande returnerar Map
+        AccessDeniedException exception = new AccessDeniedException("Åtkomst nekad");
+
+        // Act
+        ResponseEntity<Map<String, Object>> response = exceptionHandler.handleAccessDeniedException(exception, webRequest);
+
+        // Assert
+        assertNotNull(response.getBody().get("path"));
+        assertEquals("/api/test", response.getBody().get("path"));
     }
 }

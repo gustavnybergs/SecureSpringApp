@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * Jag gjorde denna för att ha ett konsekvent format för alla fel som
  * returneras från vårt API. Innehåller status, meddelande och tidsstämpel.
  *
- * @author Utvecklare 3
+ * @author Gustav
  * @version 1.0
  * @since 2025-06-09
  */

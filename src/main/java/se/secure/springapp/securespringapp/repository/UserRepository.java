@@ -9,7 +9,6 @@ import java.util.Optional;
  * Repository-gränssnitt för att hantera databasoperationer för User-entiteten.
  * Utökar JpaRepository för att få grundläggande CRUD-operationer.
  *
- * Kombinerar Gustav's dokumentation med Elie's kompletta metod-uppsättning.
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
