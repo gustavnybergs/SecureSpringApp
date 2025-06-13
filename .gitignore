@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+secure-spring-frontend/node_modules/
+secure-spring-frontend/build/
+secure-spring-frontend/.env
