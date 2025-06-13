@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 /**
  * REST-controller för administratörsspecifika operationer.
- * Endpoints i denna controller ska endast vara tillgängliga för användare med rollen ADMIN.
+ * Endpoints i denna controller är skyddade för användare med ADMIN-roll.
  */
 @RestController
 @RequestMapping("/api/admin")
@@ -19,12 +19,19 @@ public class AdminController {
 
     private final AdminService adminService;
 
+    /**
+     * Konstruktor som injicerar AdminService.
+     *
+     * @param adminService service för admin-operationer
+     */
     public AdminController(AdminService adminService) {
         this.adminService = adminService;
     }
 
     /**
      * Testendpoint för att verifiera ADMIN-access.
+     *
+     * @return välkomstmeddelande för admin
      */
     @GetMapping("/hello")
     public ResponseEntity<String> getAdminHello() {
@@ -32,9 +39,9 @@ public class AdminController {
     }
 
     /**
-     * Hämtar alla användare i systemet.
+     * Hämtar alla användare i systemet som DTO:er.
      *
-     * @return En lista av användar-DTO:er.
+     * @return lista med användare i DTO-format
      */
     @GetMapping("/users")
     public ResponseEntity<List<AppUserDTO>> getAllUsers() {
@@ -48,8 +55,8 @@ public class AdminController {
     /**
      * Hämtar en enskild användare baserat på ID.
      *
-     * @param id Användarens ID
-     * @return En användar-DTO
+     * @param id användarens ID
+     * @return användare i DTO-format
      */
     @GetMapping("/users/{id}")
     public ResponseEntity<AppUserDTO> getUserById(@PathVariable Long id) {
@@ -60,8 +67,8 @@ public class AdminController {
     /**
      * Raderar en användare baserat på ID.
      *
-     * @param id Användarens ID
-     * @return No content om lyckad borttagning.
+     * @param id användarens ID
+     * @return 204 No Content om borttagning lyckas
      */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {

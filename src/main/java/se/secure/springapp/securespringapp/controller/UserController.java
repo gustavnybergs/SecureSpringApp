@@ -9,8 +9,8 @@ import se.secure.springapp.securespringapp.model.UserPrincipal;
 import se.secure.springapp.securespringapp.service.UserService;
 
 /**
- * REST-controller för användarspecifika operationer.
- * Endpoints i denna controller ska vara tillgängliga för användare med rollen USER eller ADMIN.
+ * Controller för användarspecifika endpoints.
+ * Endpoints är tillgängliga för rollerna USER och ADMIN.
  */
 @RestController
 @RequestMapping("/api/user")
@@ -18,13 +18,21 @@ public class UserController {
 
     private final UserService userService;
 
-    // Konstruktorinjektion av UserService
+    /**
+     * Konstruktor för injektion av UserService.
+     *
+     * @param userService service för användarhantering
+     */
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     /**
-     * Test-endpoint för att verifiera att användaren är inloggad.
+
+     * Testendpoint för användar- och adminåtkomst.
+     *
+     * @return hälsningsmeddelande för inloggad användare eller admin
+
      */
     @GetMapping("/hello")
     public ResponseEntity<String> getUserHello() {
@@ -33,6 +41,9 @@ public class UserController {
 
     /**
      * Endpoint för att hämta information om den inloggade användaren.
+     *
+     * @param auth autentiseringsobjekt från Spring Security
+     * @return användarinformation som DTO utan känsliga data
      */
     @GetMapping("/me")
     public ResponseEntity<AppUserDTO> getOwnProfile(Authentication auth) {
@@ -43,7 +54,10 @@ public class UserController {
     }
 
     /**
-     * Endpoint för att ta bort sitt eget konto.
+     * Tar bort den inloggade användarens konto.
+     *
+     * @param auth autentiseringsobjekt från Spring Security
+     * @return HTTP 204 No Content vid lyckad borttagning
      */
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteOwnAccount(Authentication auth) {
