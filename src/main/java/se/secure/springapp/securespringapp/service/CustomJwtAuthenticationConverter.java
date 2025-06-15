@@ -17,16 +17,19 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Collecti
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("authorities");
+        // Hämta roller från JWT token (token innehåller "roles": ["USER", "ADMIN"])
+        List<String> roles = jwt.getClaimAsStringList("roles");
         List<GrantedAuthority> authorities = new ArrayList<>();
 
         if (roles != null) {
+            // Konvertera varje roll till Spring Security format med ROLE_ prefix
+            // Spring Security förväntar sig "ROLE_USER" istället för bara "USER"
             authorities.addAll(roles.stream()
-                    .map(SimpleGrantedAuthority::new)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .collect(Collectors.toList()));
         }
 
-        // Lägg till standard authorities (från "scope", "scp", osv.)
+        // Lägg till eventuella standardbehörigheter från JWT (scope, scp etc.)
         authorities.addAll(delegate.convert(jwt));
 
         return authorities;

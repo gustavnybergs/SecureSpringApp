@@ -1,6 +1,7 @@
 package se.secure.springapp.securespringapp.exception;
 
 import se.secure.springapp.securespringapp.exception.UserNotFoundException;
+import se.secure.springapp.securespringapp.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,18 +13,16 @@ import org.springframework.web.context.request.WebRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
 /**
  * Global felhanterare för REST-controllers.
- * Kombinerar Jawhars UserNotFoundException-hantering med Gustavs säkerhetsloggning.
+ * Kombinerar Jawhars UserNotFoundException-hantering med Gustavs säkerhetsloggning och ErrorResponse.
  *
  * Centraliserar felhantering för säkerhet, autentisering och allmänna applikationsfel.
  * Loggar säkerhetshändelser för övervakning och incident response.
+ * Använder nu Gustavs ErrorResponse för konsekvent felformat.
  *
- * @author Jawhar (UserNotFoundException), Gustav (säkerhetsloggning och utökad felhantering)
- * @version 2.0 - Kombinerad implementation
+ * @author Jawhar (UserNotFoundException), Gustav (säkerhetsloggning, ErrorResponse och utökad felhantering)
+ * @version 2.1 - Kombinerad implementation med ErrorResponse integration
  * @since 2025-06-11
  */
 @ControllerAdvice
@@ -38,7 +37,7 @@ public class GlobalExceptionHandler {
      *
      * @param ex undantaget som kastades när användaren inte hittades
      * @param request information om den inkommande HTTP-förfrågan
-     * @return felmeddelandet som sträng med 404-status
+     * @return ErrorResponse med 404-status
      */
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<String> handleUserNotFoundException(
@@ -46,17 +45,9 @@ public class GlobalExceptionHandler {
 
         logger.warn("User not found: {} - Request: {}", ex.getMessage(), request.getDescription(false));
 
-        // skapar fortfarande detaljerad error-info för loggning
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.NOT_FOUND.value(),
-                "error", "User Not Found",
-                "message", ex.getMessage(),
-                "path", request.getDescription(false).replace("uri=", "")
-        );
-
-        // Loggar detaljerna för debugging men skickar bara meddelandet till klienten
-        logger.debug("Detailed error response: {}", errorResponse);
+        // Loggar detaljerna för debugging
+        logger.debug("Detailed error response for user not found: status=404, path={}",
+                request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
@@ -64,25 +55,25 @@ public class GlobalExceptionHandler {
     /**
      * Hanterar autentiseringsfel (felaktiga användaruppgifter).
      * Loggar säkerhetshändelser för potentiella intrångsförsök.
+     * Använder nu ErrorResponse för konsekvent format.
      *
      * @param ex AuthenticationException från inloggningsförsök
      * @param request WebRequest med begäran-information
-     * @return ResponseEntity med 401 Unauthorized
+     * @return ResponseEntity med ErrorResponse och 401 Unauthorized
      */
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthenticationException(
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
 
         // Säkerhetsloggning för misslyckade inloggningsförsök
         securityLogger.warn("Authentication failed - IP: {}, Request: {}, Reason: {}",
                 getClientIP(request), request.getDescription(false), ex.getMessage());
 
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.UNAUTHORIZED.value(),
-                "error", "Authentication Failed",
-                "message", "Invalid username or password",
-                "path", request.getDescription(false).replace("uri=", "")
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Authentication Failed",
+                "Invalid username or password",
+                request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
@@ -91,25 +82,25 @@ public class GlobalExceptionHandler {
     /**
      * Hanterar åtkomstförbud (användare har inte tillräckliga rättigheter).
      * Loggar säkerhetshändelser för obehöriga åtkomstförsök.
+     * Använder nu ErrorResponse för konsekvent format.
      *
      * @param ex AccessDeniedException från rollbaserad säkerhet
      * @param request WebRequest med begäran-information
-     * @return ResponseEntity med 403 Forbidden
+     * @return ResponseEntity med ErrorResponse och 403 Forbidden
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
 
         // Säkerhetsloggning för obehöriga åtkomstförsök
         securityLogger.warn("Access denied - IP: {}, Request: {}, Reason: {}",
                 getClientIP(request), request.getDescription(false), ex.getMessage());
 
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.FORBIDDEN.value(),
-                "error", "Access Denied",
-                "message", "You don't have permission to access this resource",
-                "path", request.getDescription(false).replace("uri=", "")
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "Access Denied",
+                "You don't have permission to access this resource",
+                request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
@@ -117,24 +108,24 @@ public class GlobalExceptionHandler {
 
     /**
      * Hanterar felaktiga användaruppgifter specifikt (undermängd av AuthenticationException).
+     * Använder nu ErrorResponse för konsekvent format.
      *
      * @param ex BadCredentialsException från inloggning
      * @param request WebRequest med begäran-information
-     * @return ResponseEntity med 401 Unauthorized
+     * @return ResponseEntity med ErrorResponse och 401 Unauthorized
      */
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleBadCredentialsException(
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(
             BadCredentialsException ex, WebRequest request) {
 
         securityLogger.warn("Bad credentials attempt - IP: {}, Request: {}",
                 getClientIP(request), request.getDescription(false));
 
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.UNAUTHORIZED.value(),
-                "error", "Invalid Credentials",
-                "message", "Username or password is incorrect",
-                "path", request.getDescription(false).replace("uri=", "")
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Invalid Credentials",
+                "Username or password is incorrect",
+                request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
@@ -143,25 +134,25 @@ public class GlobalExceptionHandler {
     /**
      * Allmän felhanterare för oväntade serverfel.
      * Loggar detaljerad information för debugging utan att exponera känslig information.
+     * Använder nu ErrorResponse för konsekvent format.
      *
      * @param ex Exception som inte fångats av andra handlers
      * @param request WebRequest med begäran-information
-     * @return ResponseEntity med 500 Internal Server Error
+     * @return ResponseEntity med ErrorResponse och 500 Internal Server Error
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(
+    public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, WebRequest request) {
 
         // Logga fullständig stack trace för debugging
         logger.error("Unexpected error occurred - Request: {}", request.getDescription(false), ex);
 
         // Returnera generiskt felmeddelande utan känslig information
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "error", "Internal Server Error",
-                "message", "An unexpected error occurred. Please try again later.",
-                "path", request.getDescription(false).replace("uri=", "")
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                "An unexpected error occurred. Please try again later.",
+                request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -169,24 +160,24 @@ public class GlobalExceptionHandler {
 
     /**
      * Hanterar IllegalArgumentException för validerings-fel.
+     * Använder nu ErrorResponse för konsekvent format.
      *
      * @param ex IllegalArgumentException från validering
      * @param request WebRequest med begäran-information
-     * @return ResponseEntity med 400 Bad Request
+     * @return ResponseEntity med ErrorResponse och 400 Bad Request
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
 
         logger.warn("Invalid argument provided - Request: {}, Error: {}",
                 request.getDescription(false), ex.getMessage());
 
-        Map<String, Object> errorResponse = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.BAD_REQUEST.value(),
-                "error", "Bad Request",
-                "message", ex.getMessage(),
-                "path", request.getDescription(false).replace("uri=", "")
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
         );
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
