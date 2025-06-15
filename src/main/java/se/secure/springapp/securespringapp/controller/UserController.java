@@ -61,8 +61,13 @@ public class UserController {
      */
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteOwnAccount(Authentication auth) {
-        String username = auth.getName();
-        userService.deleteUserByUsername(username);
+        // Hämta user ID från JWT token (sub claim)
+        String userId = auth.getName();  // Detta är "sub" från JWT (user ID)
+
+        // Konvertera till Long och använd deleteById
+        Long userIdLong = Long.parseLong(userId);
+        userService.deleteUserById(userIdLong);
+
         return ResponseEntity.noContent().build();
     }
 }

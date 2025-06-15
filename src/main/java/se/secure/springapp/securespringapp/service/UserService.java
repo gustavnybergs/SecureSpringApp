@@ -6,6 +6,7 @@ import se.secure.springapp.securespringapp.repository.UserRepository;
 import se.secure.springapp.securespringapp.model.Role;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.util.HashSet;
 
@@ -76,6 +77,17 @@ public class UserService {
     public void deleteUserByUsername(String username) {
         User user = findUserByUsername(username);
         userRepository.delete(user);
+    }
+
+    /**
+     * Tar bort en användare baserat på användar-ID.
+     * Används när en användare vill ta bort sitt eget konto via JWT-autentisering.
+     *
+     * @param userId ID för användaren som ska tas bort
+     * @throws EntityNotFoundException om användaren inte finns
+     */
+    public void deleteUserById(Long userId) {
+        userRepository.deleteById(userId);
     }
     public User getUserById(Long id) {
         return userRepository.findById(id)

@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Konfigurationsklass för Swagger/OpenAPI-dokumentation av vårt REST API.
- * Jag skapade denna för User Story #5 (39 enligt github commit) eftersom vi behövde automatisk API-dokumentation
+ * Jag skapade denna för User Story #5 (39 enligt github commit) eftersom
+ * vi behövde automatisk API-dokumentation
  * som utvecklare kan använda för att förstå hur vårt API fungerar.
  *
  * Swagger UI blir tillgängligt på /swagger-ui.html så man kan testa API:et direkt
@@ -85,9 +86,12 @@ public class OpenApiConfig {
 
     /**
      * Skapar licensinformation för API:et.
-     * Definierar under vilka villkor API:et får användas och distribueras.
      *
-     * @return License-objekt med licensinformation
+     * TODO: Egentligen borde vi inte använda MIT-licens för ett skolprojekt.
+     * Detta är mer av ett exempel på hur man konfigurerar licenser i OpenAPI.
+     * För riktiga projekt bör licensen diskuteras med projektägare/organisation.
+     *
+     * @return License-objekt med licensinformation (exempel-syfte)
      */
     private License createLicenseInfo() {
         return new License()
@@ -113,6 +117,10 @@ public class OpenApiConfig {
      * att autentisera requests till säkra endpoints.
      *
      * Tokens ska skickas som: Authorization: Bearer <jwt-token>
+     *
+     * Gör det möjligt för andra utvecklare att testa skyddade endpoints
+     * direkt i Swagger UI genom "Authorize"-knappen. Utan denna får
+     * användare bara 401/403-fel utan möjlighet att autentisera.
      *
      * @return SecurityScheme-objekt konfigurerat för JWT Bearer authentication
      */

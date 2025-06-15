@@ -58,36 +58,50 @@ export const authService = {
   },
 
   // Logga in användare
-  login: async (credentials) => {
-    try {
+login: async (credentials) => {
+  try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      
+      // 🐛 DEBUG
+      console.log('🔍 Backend response:', response);
+      console.log('🔍 Response data:', response.data);
+      console.log('🔍 Token type:', typeof response.data);
+      
       const token = response.data;
+      console.log('🔍 Extracted token:', token);
       
       if (!token || typeof token !== 'string') {
-        throw new Error('Ogiltig token från servern');
+          console.log('❌ Token validation failed!');
+          throw new Error('Ogiltig token från servern');
       }
       
       localStorage.setItem('jwt-token', token);
       
       // Extrahera användarinfo från JWT payload
-      const tokenPayload = this.decodeJwtPayload(token);
+      const tokenPayload = authService.decodeJwtPayload(token);
+      console.log('🔍 Token payload:', tokenPayload);
+      
       const userInfo = {
-        id: tokenPayload.sub,
-        email: credentials.email,
-        username: tokenPayload.username,
-        role: tokenPayload.roles?.[0] || 'USER'
+          id: tokenPayload.sub,
+          email: credentials.email,
+          username: tokenPayload.username,
+          role: tokenPayload.roles?.[0] || 'USER'
       };
+      console.log('🔍 User info:', userInfo);
       
       localStorage.setItem('user-info', JSON.stringify(userInfo));
       
       return { token, user: userInfo };
-    } catch (error) {
+  } catch (error) {
+      console.log('❌ Login error:', error);
+      console.log('❌ Error response:', error.response);
+      
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'Inloggning misslyckades';
       throw new Error(errorMessage);
-    }
-  },
+  }
+},
 
   // Logga ut användare
   logout: async () => {

@@ -28,11 +28,40 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 
+/**
+ * Huvudkonfiguration för Spring Security i applikationen.
+ * Kombinerad implementation av Gustav (säkerhetsheaders + CORS),
+ * Jawhar (AuthenticationManager) och Elie (JWT-system).
+ *
+ * Gusatv har satt upp CORS-hantering och säkerhetsheaders för att uppfylla säkerhetskraven,
+ * medan Jawhar implementerat AuthenticationManager och Elie byggt JWT-systemet.
+ *
+ * Konfigurerar stateless sessions med JWT-tokens, rollbaserad åtkomst med USER/ADMIN,
+ * och säkerhetsheaders som HSTS, XSS-skydd och frame protection.
+ * CSRF är avstängt eftersom vi använder JWT istället för sessions.
+ *
+ * Öppna endpoints: /api/auth/**, /api/public/**, swagger-dokumentation
+ * Skyddade endpoints: /api/user/** (USER+ADMIN), /api/admin/** (bara ADMIN)
+ *
+ * @author Gustav (säkerhetsheaders, CORS), Jawhar (autentisering), Elie (JWT-implementation)
+ * @version 1.0
+ * @since 2025-06-07
+ */
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    /**
+     * Konfigurerar säkerhetsfilterkedjan med CORS och säkerhetsheaders.
+     * Gustav implementerade säkerhetsheaders (HSTS, frame protection, XSS-skydd)
+     * medan teamet hanterar autentisering och JWT.
+     *
+     * @param http HttpSecurity-objektet för konfiguration
+     * @return SecurityFilterChain den konfigurerade säkerhetsfilterkedjan
+     * @throws Exception om konfigurationen misslyckas
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -83,7 +112,12 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
+    /**
+     * Skapar BCrypt password encoder för säker lösenordshantering.
+     * BCrypt använder salt och är motståndskraftig mot rainbow table-attacker.
+     *
+     * @return PasswordEncoder BCrypt-baserad lösenordskodare
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -1,5 +1,5 @@
 package se.secure.springapp.securespringapp.controller;
-
+// Eventuellt se över klassens betydelse enligt KISS principen
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,8 +29,9 @@ import java.util.Map;
 public class ApiDocumentationController {
 
     /**
-     * Enkel hälsokontroll som visar att API:et är igång och fungerar.
-     * Jag använder detta när jag utvecklar för att snabbt se att servern startade rätt.
+     * Spring Boot-processcheck som visar att servern svarar på HTTP-requests.
+     * Bekräftar att applikationen startade och lyssnar på rätt port,
+     * men testar inte databas, externa services eller andra dependencies.
      * Returnerar grundläggande systeminfo utan känsliga detaljer.
      *
      * @return ResponseEntity med systemstatus och grundläggande information
