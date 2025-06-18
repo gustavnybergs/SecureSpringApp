@@ -20,11 +20,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.Valid;
-import se.secure.springapp.securespringapp.model.Role;
 import se.secure.springapp.securespringapp.model.User;
 import se.secure.springapp.securespringapp.repository.UserRepository;
+import se.secure.springapp.securespringapp.service.UserService;
 
 import java.util.Map;
 
@@ -46,6 +48,11 @@ import java.util.Map;
 public class AuthController {
 
     /**
+     * Service för användarhantering används för registrering.
+     */
+    private final UserService userService;
+
+    /**
      * Repository för användardata - används av Elie's registreringslogik.
      */
     private final UserRepository userRepository;
@@ -60,10 +67,12 @@ public class AuthController {
      *
      * @param userRepository repository för användaroperationer
      * @param passwordEncoder BCrypt encoder för lösenord
+     * @param userService Service för användarhantering
      */
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, UserService userService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
     }
 
     /**
@@ -149,12 +158,13 @@ public class AuthController {
     /**
      * Registrerar ny användare i systemet.
      *
-     * Implementerad av Elie. Kontrollerar dubbletter, hashar lösenord
-     * och sparar användare med standardroll USER. Returnerar 201 Created
-     * med användardata (exklusive lösenord).
+     * Implementerad av Elie, uppdaterad för Controller → Service → Repository arkitektur.
+     * Delegerar validering, lösenordshashing och sparande till UserService som kontrollerar
+     * dubbletter, hashar lösenord och sparar användare med standardroll USER.
+     * Returnerar 201 Created med användardata (exklusive lösenord).
      *
      * @param request registreringsdata inklusive username, email och lösenord
-     * @return bekräftelsemeddelande med användar-ID
+     * @return bekräftelsemeddelande med användar-ID vid framgång
      */
     @PostMapping("/register")
     @Operation(
@@ -208,33 +218,10 @@ public class AuthController {
                     )
             )
     })
+
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         try {
-            // Elies implementation - kontrollera dubbletter
-            if (userRepository.existsByUsername(request.getUsername())) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Användarnamnet är redan taget"
-                ));
-            }
-
-            if (userRepository.existsByEmail(request.getEmail())) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Email-adressen är redan registrerad"
-                ));
-            }
-
-            // Kryptera lösenord och skapa användare
-            String hashedPassword = passwordEncoder.encode(request.getPassword());
-
-            User newUser = new User();
-            newUser.setUsername(request.getUsername());
-            newUser.setEmail(request.getEmail());
-            newUser.setPassword(hashedPassword);
-            newUser.setFullName(request.getFullName());
-            newUser.addRole(Role.USER);
-            newUser.setConsentGiven(false);
-
-            User savedUser = userRepository.save(newUser);
+            User savedUser = userService.registerUser(request);
 
             return ResponseEntity.status(201).body(Map.of(
                     "message", "Användare skapad framgångsrikt",
@@ -244,6 +231,8 @@ public class AuthController {
                     "role", "USER"
             ));
 
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
         } catch (Exception ex) {
             return ResponseEntity.status(500).body(Map.of(
                     "error", "Ett internt fel uppstod vid registrering",
@@ -253,46 +242,59 @@ public class AuthController {
     }
 
     /**
-     * Validerar JWT-token från Authorization header.
+     * Validerar JWT-token från request body.
      *
-     * Endpoint skyddat av JWT-filter som automatiskt validerar token.
-     * Om denna metod anropas har token redan validerats av Spring Security.
+     * Tar emot en JWT-token i request body och validerar den mot
+     * systemets säkerhetsinställningar. Returnerar användarinformation
+     * om token är giltig.
      *
-     * @return bekräftelse att token är giltig
+     * @param request Map innehållande "token" nyckel med JWT-token som värde
+     * @return ResponseEntity med validationsresultat och användarinfo om giltig
+     * @throws RuntimeException om token-validering misslyckas
      */
     @PostMapping("/validate-token")
     @Operation(
             summary = "Validera JWT-token",
             description = "Kontrollerar om den angivna JWT-token är giltig och returnerar användarinformation."
     )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Token är giltig",
-                    content = @Content(
+    public ResponseEntity<?> validateToken(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "JWT token som ska valideras",
+                    required = true,
+                    content = @io.swagger.v3.oas.annotations.media.Content(
                             mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Giltig token",
-                                    value = "{\"message\": \"Token validation endpoint - Använder SecurityContext från JWT-filter\", \"valid\": true}"
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401",
-                    description = "Ogiltig eller utgången token",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "Ogiltig token",
-                                    value = "{\"error\": \"Invalid or expired token\"}"
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    example = """
+                                {
+                                    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMCIsInVzZXJuYW1lIjoiZWxpZUBleGFtcGxlLmNvbSIsInJvbGVzIjpbIlVTRVIiXSwiaWF0IjoxNzUwMDc0NzYyLCJleHAiOjE3NTAxNjExNjJ9.nsZChw5_Yksuw-s-5fg9GvZCdfqkMajnBREcW3saeMI"
+                                }
+                                """
                             )
                     )
             )
-    })
-    public ResponseEntity<?> validateToken() {
-        return ResponseEntity.ok(Map.of(
-                "message", "Token validation endpoint - Använder SecurityContext från JWT-filter",
-                "valid", true
-        ));
+            @RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null) {
+                return ResponseEntity.badRequest().body(Map.of("valid", false, "error", "Token saknas"));
+            }
+
+            // Ta bort Bearer prefix om det finns
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
+            boolean isValid = jwtTokenProvider.validateToken(token);
+
+            if (isValid) {
+                String username = jwtTokenProvider.getUsername(token);
+                return ResponseEntity.ok(Map.of("valid", true, "username", username));
+            } else {
+                return ResponseEntity.ok(Map.of("valid", false, "message", "Token ogiltig"));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("valid", false, "error", e.getMessage()));
+        }
     }
 }

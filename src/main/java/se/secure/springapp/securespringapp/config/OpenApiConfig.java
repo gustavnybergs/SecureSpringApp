@@ -3,9 +3,6 @@ package se.secure.springapp.securespringapp.config;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
-import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,21 +19,21 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0
  * @since 2025-06-09
  */
+
 @Configuration
 public class OpenApiConfig {
 
     /**
      * Skapar huvudkonfigurationen för OpenAPI-dokumentationen.
-     * Här samlar jag ihop all metadata och säkerhetsinställningar som ska visas
-     * i Swagger UI. Spring Boot genererar sedan automatiskt dokumentationen.
+     * Här samlar jag ihop all metadata som ska visas i Swagger UI.
+     * Spring Boot genererar sedan automatiskt dokumentationen.
      *
      * @return komplett OpenAPI-konfiguration med all info som behövs
      */
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                .info(createApiInfo())
-                .components(createSecurityComponents());
+                .info(createApiInfo());
     }
 
     /**
@@ -62,14 +59,14 @@ public class OpenApiConfig {
                     **Autentisering:**
                     API:et använder JWT Bearer tokens för autentisering.
                     Logga in via /api/auth/login för att få en token.
+                    Testa tokens med /api/auth/validate-token endpoint.
                     
                     **Roller:**
                     - **ADMIN**: Full åtkomst till alla endpoints
                     - **USER**: Begränsad åtkomst till användarfunktioner
                     """)
                 .version("1.0.0")
-                .contact(createContactInfo())
-                .license(createLicenseInfo());
+                .contact(createContactInfo());
     }
 
     /**
@@ -82,65 +79,5 @@ public class OpenApiConfig {
                 .name("Gustav Nyberg")
                 .email("gustav.nyberg@securespringapp.se")
                 .url("https://github.com/gustavnyberg");
-    }
-
-    /**
-     * Skapar licensinformation för API:et.
-     *
-     * TODO: Egentligen borde vi inte använda MIT-licens för ett skolprojekt.
-     * Detta är mer av ett exempel på hur man konfigurerar licenser i OpenAPI.
-     * För riktiga projekt bör licensen diskuteras med projektägare/organisation.
-     *
-     * @return License-objekt med licensinformation (exempel-syfte)
-     */
-    private License createLicenseInfo() {
-        return new License()
-                .name("MIT License")
-                .url("https://opensource.org/licenses/MIT");
-    }
-
-    /**
-     * Skapar säkerhetskomponenter för OpenAPI-specifikationen.
-     * Definierar autentiseringsscheman som används av säkra endpoints,
-     * primärt JWT Bearer Token-autentisering.
-     *
-     * @return Components-objekt med konfigurerade säkerhetsscheman
-     */
-    private Components createSecurityComponents() {
-        return new Components()
-                .addSecuritySchemes("bearerAuth", createJwtSecurityScheme());
-    }
-
-    /**
-     * Skapar JWT Bearer Token-säkerhetsschema för autentisering.
-     * Definierar hur JWT-tokens ska skickas i HTTP-headers för
-     * att autentisera requests till säkra endpoints.
-     *
-     * Tokens ska skickas som: Authorization: Bearer <jwt-token>
-     *
-     * Gör det möjligt för andra utvecklare att testa skyddade endpoints
-     * direkt i Swagger UI genom "Authorize"-knappen. Utan denna får
-     * användare bara 401/403-fel utan möjlighet att autentisera.
-     *
-     * @return SecurityScheme-objekt konfigurerat för JWT Bearer authentication
-     */
-    private SecurityScheme createJwtSecurityScheme() {
-        return new SecurityScheme()
-                .type(SecurityScheme.Type.HTTP)
-                .scheme("bearer")
-                .bearerFormat("JWT")
-                .description("""
-                    JWT Bearer Token autentisering.
-                    
-                    **Så här använder du:**
-                    1. Logga in via POST /api/auth/login
-                    2. Kopiera JWT-token från response
-                    3. Klicka på 'Authorize'-knappen ovan
-                    4. Ange token (utan 'Bearer ' prefix)
-                    5. Alla efterföljande requests autentiseras automatiskt
-                    
-                    **Token format:** Bearer <jwt-token>
-                    **Header:** Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-                    """);
     }
 }

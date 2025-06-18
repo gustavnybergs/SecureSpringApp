@@ -81,11 +81,13 @@ const Dashboard = ({ onLogout }) => {
       }}>
         <h3>Din profil</h3>
         <p><strong>Email:</strong> {user?.email || 'Inte tillgänglig'}</p>
-        <p><strong>Fullständigt namn:</strong> {user?.fullName || 'Inte angivet'}</p>
+        {/*<p><strong>Fullständigt namn:</strong> {user?.fullName || 'Inte angivet'}</p> */}
         <p><strong>Roll:</strong> {user?.role || 'USER'}</p>
         <p><strong>Användar-ID:</strong> {user?.id || 'Inte tillgängligt'}</p>
       </div>
 
+      
+{/* Temporärt dold för presentation
       <div style={{ 
         background: '#fff3cd', 
         padding: '20px', 
@@ -102,6 +104,7 @@ const Dashboard = ({ onLogout }) => {
           </code>
         </small></p>
       </div>
+*/}
 
       <div style={{ 
         background: '#d1ecf1', 

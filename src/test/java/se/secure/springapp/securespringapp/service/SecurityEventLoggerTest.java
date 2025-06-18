@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Testar att säkerhetsloggning fungerar korrekt och validerar parametrar.
  *
  * @author Gustav
- * @version 1.0
+ * @version 2.0 - Uppdaterad utan IP-krav
  * @since 2025-06-10
  */
 @ExtendWith(MockitoExtension.class)
@@ -26,10 +26,56 @@ class SecurityEventLoggerTest {
     }
 
     @Test
+    void logUserRegistration_ShouldNotThrowException() {
+        // Act & Assert
+        assertDoesNotThrow(() -> {
+            securityEventLogger.logUserRegistration("test@example.com");
+        });
+    }
+
+    @Test
+    void logUserRegistration_ShouldThrowExceptionForNullEmail() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            securityEventLogger.logUserRegistration(null);
+        });
+
+        assertTrue(exception.getMessage().contains("cannot be null"));
+    }
+
+    @Test
+    void logUserDeletion_ShouldNotThrowException() {
+        // Act & Assert
+        assertDoesNotThrow(() -> {
+            securityEventLogger.logUserDeletion("user@example.com", "admin@example.com");
+        });
+    }
+
+    @Test
+    void logUserDeletion_ShouldThrowExceptionForNullUserEmail() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            securityEventLogger.logUserDeletion(null, "admin@example.com");
+        });
+
+        assertTrue(exception.getMessage().contains("cannot be null"));
+    }
+
+    @Test
+    void logUserDeletion_ShouldThrowExceptionForNullDeletedBy() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            securityEventLogger.logUserDeletion("user@example.com", null);
+        });
+
+        assertTrue(exception.getMessage().contains("cannot be null"));
+    }
+
+    @Test
     void logSuccessfulAuthentication_ShouldNotThrowException() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logSuccessfulAuthentication("test@example.com", "192.168.1.1");
+            securityEventLogger.logSuccessfulAuthentication("test@example.com");
         });
     }
 
@@ -37,17 +83,7 @@ class SecurityEventLoggerTest {
     void logSuccessfulAuthentication_ShouldThrowExceptionForNullEmail() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logSuccessfulAuthentication(null, "192.168.1.1");
-        });
-
-        assertTrue(exception.getMessage().contains("cannot be null"));
-    }
-
-    @Test
-    void logSuccessfulAuthentication_ShouldThrowExceptionForNullIpAddress() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logSuccessfulAuthentication("test@example.com", null);
+            securityEventLogger.logSuccessfulAuthentication(null);
         });
 
         assertTrue(exception.getMessage().contains("cannot be null"));
@@ -57,7 +93,7 @@ class SecurityEventLoggerTest {
     void logFailedAuthentication_ShouldNotThrowException() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logFailedAuthentication("test@example.com", "192.168.1.1", "Fel lösenord");
+            securityEventLogger.logFailedAuthentication("test@example.com", "Fel lösenord");
         });
     }
 
@@ -65,53 +101,25 @@ class SecurityEventLoggerTest {
     void logFailedAuthentication_ShouldAllowNullEmail() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logFailedAuthentication(null, "192.168.1.1", "Ogiltig email");
+            securityEventLogger.logFailedAuthentication(null, "Ogiltig email");
         });
-    }
-
-    @Test
-    void logFailedAuthentication_ShouldThrowExceptionForNullIpAddress() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logFailedAuthentication("test@example.com", null, "Fel lösenord");
-        });
-
-        assertTrue(exception.getMessage().contains("cannot be null"));
     }
 
     @Test
     void logFailedAuthentication_ShouldThrowExceptionForNullReason() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logFailedAuthentication("test@example.com", "192.168.1.1", null);
+            securityEventLogger.logFailedAuthentication("test@example.com", null);
         });
 
         assertTrue(exception.getMessage().contains("cannot be null"));
     }
 
     @Test
-    void logResourceAccess_ShouldNotThrowException() {
-        // Act & Assert
-        assertDoesNotThrow(() -> {
-            securityEventLogger.logResourceAccess("test@example.com", "/api/user/profile", "GET", "192.168.1.1");
-        });
-    }
-
-    @Test
-    void logResourceAccess_ShouldThrowExceptionForNullUserEmail() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logResourceAccess(null, "/api/user/profile", "GET", "192.168.1.1");
-        });
-
-        assertTrue(exception.getMessage().contains("non-null"));
-    }
-
-    @Test
     void logAdminActivity_ShouldNotThrowException() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logAdminActivity("admin@example.com", "USER_DELETE", "target@example.com", "192.168.1.1");
+            securityEventLogger.logAdminActivity("admin@example.com", "USER_DELETE", "target@example.com");
         });
     }
 
@@ -119,7 +127,7 @@ class SecurityEventLoggerTest {
     void logAdminActivity_ShouldAllowNullTargetUser() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logAdminActivity("admin@example.com", "SYSTEM_CONFIG", null, "192.168.1.1");
+            securityEventLogger.logAdminActivity("admin@example.com", "SYSTEM_CONFIG", null);
         });
     }
 
@@ -127,7 +135,17 @@ class SecurityEventLoggerTest {
     void logAdminActivity_ShouldThrowExceptionForNullAdminEmail() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logAdminActivity(null, "USER_DELETE", "target@example.com", "192.168.1.1");
+            securityEventLogger.logAdminActivity(null, "USER_DELETE", "target@example.com");
+        });
+
+        assertTrue(exception.getMessage().contains("cannot be null"));
+    }
+
+    @Test
+    void logAdminActivity_ShouldThrowExceptionForNullAction() {
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            securityEventLogger.logAdminActivity("admin@example.com", null, "target@example.com");
         });
 
         assertTrue(exception.getMessage().contains("cannot be null"));
@@ -137,7 +155,7 @@ class SecurityEventLoggerTest {
     void logSecurityIncident_ShouldNotThrowException() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logSecurityIncident("BRUTE_FORCE", "Flera misslyckade inloggningar", "192.168.1.1", "attacker@evil.com");
+            securityEventLogger.logSecurityIncident("BRUTE_FORCE", "Flera misslyckade inloggningar", "attacker@evil.com");
         });
     }
 
@@ -145,7 +163,7 @@ class SecurityEventLoggerTest {
     void logSecurityIncident_ShouldAllowNullUserEmail() {
         // Act & Assert
         assertDoesNotThrow(() -> {
-            securityEventLogger.logSecurityIncident("SUSPICIOUS_REQUEST", "Onormal request pattern", "192.168.1.1", null);
+            securityEventLogger.logSecurityIncident("SUSPICIOUS_REQUEST", "Onormal request pattern", null);
         });
     }
 
@@ -153,53 +171,19 @@ class SecurityEventLoggerTest {
     void logSecurityIncident_ShouldThrowExceptionForNullIncidentType() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logSecurityIncident(null, "Test incident", "192.168.1.1", "test@example.com");
+            securityEventLogger.logSecurityIncident(null, "Test incident", "test@example.com");
         });
 
         assertTrue(exception.getMessage().contains("cannot be null"));
     }
 
     @Test
-    void logSystemSecurityEvent_ShouldNotThrowException() {
-        // Act & Assert
-        assertDoesNotThrow(() -> {
-            securityEventLogger.logSystemSecurityEvent("CONFIG_CHANGE", "Säkerhetsinställningar uppdaterade", "Admin panel");
-        });
-    }
-
-    @Test
-    void logSystemSecurityEvent_ShouldAllowNullDetails() {
-        // Act & Assert
-        assertDoesNotThrow(() -> {
-            securityEventLogger.logSystemSecurityEvent("STARTUP", "System startat", null);
-        });
-    }
-
-    @Test
-    void logSystemSecurityEvent_ShouldThrowExceptionForNullEventType() {
+    void logSecurityIncident_ShouldThrowExceptionForNullDescription() {
         // Act & Assert
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logSystemSecurityEvent(null, "Test meddelande", "Test detaljer");
+            securityEventLogger.logSecurityIncident("BRUTE_FORCE", null, "test@example.com");
         });
 
         assertTrue(exception.getMessage().contains("cannot be null"));
-    }
-
-    @Test
-    void logSecurityConfigChange_ShouldNotThrowException() {
-        // Act & Assert
-        assertDoesNotThrow(() -> {
-            securityEventLogger.logSecurityConfigChange("PASSWORD_POLICY", "Minsta längd ändrad till 10", "admin@example.com");
-        });
-    }
-
-    @Test
-    void logSecurityConfigChange_ShouldThrowExceptionForNullConfigType() {
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            securityEventLogger.logSecurityConfigChange(null, "Ändring gjord", "admin@example.com");
-        });
-
-        assertTrue(exception.getMessage().contains("non-null"));
     }
 }
