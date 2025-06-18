@@ -114,7 +114,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
+        {/*
+         <div style={{ marginBottom: '15px' }}>
           <label>Fullständigt namn (valfritt):</label>
           <input
             type="text"
@@ -130,6 +131,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
             }}
           />
         </div>
+         */}
 
         <div style={{ marginBottom: '20px' }}>
           <label>Lösenord:</label>

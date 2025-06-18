@@ -62,7 +62,7 @@ const DeleteAccount = ({ user, onDeleteSuccess, onCancel }) => {
         }}>
           <p><strong>Konto som kommer raderas:</strong></p>
           <p>📧 Email: {user?.email}</p>
-          <p>👤 Namn: {user?.fullName || 'Inte angivet'}</p>
+          {/*<p>👤 Namn: {user?.fullName || 'Inte angivet'}</p> */}
           <p>🆔 ID: {user?.id}</p>
         </div>
 

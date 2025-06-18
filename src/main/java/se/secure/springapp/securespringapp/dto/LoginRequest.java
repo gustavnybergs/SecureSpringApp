@@ -3,6 +3,11 @@ package se.secure.springapp.securespringapp.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * Request DTO för användarinloggning via REST API.
@@ -17,82 +22,37 @@ import jakarta.validation.constraints.NotBlank;
  *
  * Innehåller email och lösenord med automatisk validering via Bean Validation.
  * Swagger-annotationer gör att denna syns korrekt i API-dokumentationen.
+ * Lombok-annotationer genererar automatiskt getters, setters och konstruktorer.
  *
  * @author Gustav
- * @version 1.0
+ * @version 2.0
  * @since 2025-06-09
  */
-// SWAGGER-DOKUMENTATION: Beskriver hela klassen för API-doc
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = "password") // Exkluderar lösenord från toString av säkerhetsskäl
 @Schema(description = "Request för att logga in en användare")
 public class LoginRequest {
 
-    // SWAGGER-DOKUMENTATION: Beskriver email-fältet i Swagger UI
-    @Schema(description = "Användarens email-adress", example = "user@example.com", required = true)
-    // VALIDERING: Kontrollerar att email har rätt format
-    @Email(message = "Email måste vara giltig")
-    // VALIDERING: Kontrollerar att email inte är tom
+    /**
+     * SWAGGER-DOKUMENTATION: Beskriver email-fältet i Swagger UI
+     * VALIDERING: Kontrollerar att email har rätt format och inte är tom
+     * JSON-MAPPNING: Spring konverterar automatiskt JSON ↔ objekt via Lombok
+     */
     @NotBlank(message = "Email får inte vara tom")
-    private String email; // ← STRUKTUR: Privat fält för email
+    @Email(message = "Email måste vara giltig")
+    @Schema(description = "Användarens email-adress", example = "user@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String email;
 
-    // SWAGGER-DOKUMENTATION: Beskriver lösenord-fältet
-    @Schema(description = "Användarens lösenord", example = "SecurePassword123!", required = true)
-    @NotBlank(message = "Lösenord får inte vara tomt") // Validering av att lösen inte är tomt
+    /**
+     * SWAGGER-DOKUMENTATION: Beskriver lösenord-fältet
+     * VALIDERING: Kontrollerar att lösenord inte är tomt
+     * SÄKERHET: Exkluderas från toString() för att förhindra loggning
+     * JSON-MAPPNING: Spring konverterar automatiskt JSON ↔ objekt via Lombok
+     */
+    @NotBlank(message = "Lösenord får inte vara tomt")
+    @Schema(description = "Användarens lösenord", example = "SecurePassword123!", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
-
-    /**
-     * JSON-MAPPNING: Tom konstruktor för Spring att konvertera JSON → objekt
-     */
-    public LoginRequest() {}
-
-    /**
-     * Konstruktor för att skapa LoginRequest med alla fält.
-     * Praktisk för enhetstester och manuell objektskapning.
-     *
-     * @param email användarens email-adress
-     * @param password användarens lösenord
-     */
-    public LoginRequest(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
-
-    /**
-     * JSON-MAPPNING: Getter för Spring att konvertera objekt → JSON
-     * Hämtar användarens email-adress.
-     *
-     * @return email-adressen som String
-     */
-    public String getEmail() {
-        return email;
-    }
-
-    /**
-     * JSON-MAPPNING: Setter för Spring att sätta värden från JSON
-     * Sätter användarens email-adress.
-     *
-     * @param email den nya email-adressen
-     */
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    /**
-     * JSON-MAPPNING: Getter för lösenord
-     * Hämtar användarens lösenord.
-     *
-     * @return lösenordet som String
-     */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * JSON-MAPPNING: Setter för lösenord
-     * Sätter användarens lösenord.
-     *
-     * @param password det nya lösenordet
-     */
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }

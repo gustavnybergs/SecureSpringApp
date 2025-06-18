@@ -1,5 +1,6 @@
 package se.secure.springapp.securespringapp.exception;
 
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import se.secure.springapp.securespringapp.exception.UserNotFoundException;
 import se.secure.springapp.securespringapp.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -203,5 +204,36 @@ public class GlobalExceptionHandler {
 
         // Fallback - WebRequest har ingen direkt metod för remote address
         return "unknown";
+    }
+
+    /**
+     * Hanterar Bean Validation-fel från @Valid annotationer.
+     * Konverterar MethodArgumentNotValidException till 400 Bad Request.
+     *
+     * @param ex MethodArgumentNotValidException från Spring validation
+     * @param request WebRequest med begäran-information
+     * @return ResponseEntity med ErrorResponse och 400 Bad Request
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            MethodArgumentNotValidException ex, WebRequest request) {
+
+        // Samla alla valideringsfel
+        StringBuilder errorMessage = new StringBuilder("Valideringsfel: ");
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errorMessage.append(error.getField())
+                        .append(" - ")
+                        .append(error.getDefaultMessage())
+                        .append("; ")
+        );
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation Failed",
+                errorMessage.toString(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

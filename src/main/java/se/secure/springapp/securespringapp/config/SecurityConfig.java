@@ -33,14 +33,14 @@ import java.util.Arrays;
  * Kombinerad implementation av Gustav (säkerhetsheaders + CORS),
  * Jawhar (AuthenticationManager) och Elie (JWT-system).
  *
- * Gusatv har satt upp CORS-hantering och säkerhetsheaders för att uppfylla säkerhetskraven,
+ * Gustav har satt upp CORS-hantering och säkerhetsheaders för att uppfylla säkerhetskraven,
  * medan Jawhar implementerat AuthenticationManager och Elie byggt JWT-systemet.
  *
  * Konfigurerar stateless sessions med JWT-tokens, rollbaserad åtkomst med USER/ADMIN,
  * och säkerhetsheaders som HSTS, XSS-skydd och frame protection.
  * CSRF är avstängt eftersom vi använder JWT istället för sessions.
  *
- * Öppna endpoints: /api/auth/**, /api/public/**, swagger-dokumentation
+ * Öppna endpoints: /api/auth/**, swagger-dokumentation
  * Skyddade endpoints: /api/user/** (USER+ADMIN), /api/admin/** (bara ADMIN)
  *
  * @author Gustav (säkerhetsheaders, CORS), Jawhar (autentisering), Elie (JWT-implementation)
@@ -81,7 +81,6 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
