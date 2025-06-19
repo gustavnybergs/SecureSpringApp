@@ -3,22 +3,24 @@ import { authService } from '../../services/authService';
 
 /**
  * Registreringskomponent för nya användare.
- * Validerar lösenordsstyrka enligt säkerhetskrav.
+ * Validerar lösenordsstyrka enligt säkerhetskrav och kräver GDPR-samtycke.
  */
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    fullName: ''
+    fullName: '',
+    consentGiven: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
+    const { name, type, checked, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     });
     setError('');
     setSuccess('');
@@ -51,11 +53,16 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       return;
     }
 
+    if (!formData.consentGiven) {
+      setError('Du måste ge samtycke till datalagring för att registrera dig.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await authService.register(formData);
       setSuccess('Registrering lyckad! Du kan nu logga in.');
       
-      // Automatisk omdirigering för bättre användarupplevelse
       setTimeout(() => {
         onSwitchToLogin();
       }, 2000);
@@ -114,8 +121,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
           />
         </div>
 
-        {/*
-         <div style={{ marginBottom: '15px' }}>
+        <div style={{ marginBottom: '15px' }}>
           <label>Fullständigt namn (valfritt):</label>
           <input
             type="text"
@@ -131,7 +137,6 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
             }}
           />
         </div>
-         */}
 
         <div style={{ marginBottom: '20px' }}>
           <label>Lösenord:</label>
@@ -154,17 +159,61 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
           </small>
         </div>
 
+        <div style={{ 
+          marginBottom: '20px',
+          padding: '15px',
+          border: '2px solid #007bff',
+          borderRadius: '8px',
+          background: '#f8f9fa'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'flex-start', 
+            gap: '10px' 
+          }}>
+            <input
+              type="checkbox"
+              id="consentGiven"
+              name="consentGiven"
+              checked={formData.consentGiven}
+              onChange={handleChange}
+              required
+              style={{
+                marginTop: '3px',
+                transform: 'scale(1.2)'
+              }}
+            />
+            <label 
+              htmlFor="consentGiven" 
+              style={{ 
+                fontSize: '14px', 
+                lineHeight: '1.4',
+                cursor: 'pointer'
+              }}
+            >
+              <strong>Jag samtycker till datalagring enligt GDPR</strong>
+              <br />
+              <small style={{ color: '#666' }}>
+                Jag godkänner att mina personuppgifter (email, namn, lösenord) 
+                sparas säkert i systemet. Du kan när som helst radera ditt konto 
+                och all associerad data via din profil.
+              </small>
+            </label>
+          </div>
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !formData.consentGiven}
           style={{
             width: '100%',
-            padding: '10px',
-            backgroundColor: loading ? '#ccc' : '#28a745',
+            padding: '12px',
+            backgroundColor: loading || !formData.consentGiven ? '#ccc' : '#28a745',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
+            cursor: loading || !formData.consentGiven ? 'not-allowed' : 'pointer',
+            fontSize: '16px'
           }}
         >
           {loading ? 'Registrerar...' : 'Registrera'}
