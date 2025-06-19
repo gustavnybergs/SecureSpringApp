@@ -27,14 +27,15 @@ axios.interceptors.response.use(
 );
 
 export const authService = {
-  // Registrera ny användare
+  // Registrera ny användare med GDPR-samtycke
   register: async (userData) => {
     try {
       const requestData = {
         email: userData.email,
         password: userData.password,
         fullName: userData.fullName || '',
-        username: userData.email.split('@')[0]
+        username: userData.email.split('@')[0],
+        consentGiven: userData.consentGiven || false
       };
       
       const response = await axios.post(`${API_BASE_URL}/auth/register`, requestData);
@@ -58,50 +59,38 @@ export const authService = {
   },
 
   // Logga in användare
-login: async (credentials) => {
-  try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
-      
-      // 🐛 DEBUG
-      console.log('🔍 Backend response:', response);
-      console.log('🔍 Response data:', response.data);
-      console.log('🔍 Token type:', typeof response.data);
-      
-      const token = response.data;
-      console.log('🔍 Extracted token:', token);
-      
-      if (!token || typeof token !== 'string') {
-          console.log('❌ Token validation failed!');
-          throw new Error('Ogiltig token från servern');
-      }
-      
-      localStorage.setItem('jwt-token', token);
-      
-      // Extrahera användarinfo från JWT payload
-      const tokenPayload = authService.decodeJwtPayload(token);
-      console.log('🔍 Token payload:', tokenPayload);
-      
-      const userInfo = {
-          id: tokenPayload.sub,
-          email: credentials.email,
-          username: tokenPayload.username,
-          role: tokenPayload.roles?.[0] || 'USER'
-      };
-      console.log('🔍 User info:', userInfo);
-      
-      localStorage.setItem('user-info', JSON.stringify(userInfo));
-      
-      return { token, user: userInfo };
-  } catch (error) {
-      console.log('❌ Login error:', error);
-      console.log('❌ Error response:', error.response);
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          'Inloggning misslyckades';
-      throw new Error(errorMessage);
-  }
-},
+  login: async (credentials) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+        
+        const token = response.data;
+        
+        if (!token || typeof token !== 'string') {
+            throw new Error('Ogiltig token från servern');
+        }
+        
+        localStorage.setItem('jwt-token', token);
+        
+        // Extrahera användarinfo från JWT payload
+        const tokenPayload = authService.decodeJwtPayload(token);
+        
+        const userInfo = {
+            id: tokenPayload.sub,
+            email: credentials.email,
+            username: tokenPayload.username,
+            role: tokenPayload.roles?.[0] || 'USER'
+        };
+        
+        localStorage.setItem('user-info', JSON.stringify(userInfo));
+        
+        return { token, user: userInfo };
+    } catch (error) {
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            'Inloggning misslyckades';
+        throw new Error(errorMessage);
+    }
+  },
 
   // Logga ut användare
   logout: async () => {
@@ -137,7 +126,7 @@ login: async (credentials) => {
     if (!token) return false;
     
     try {
-      const payload = this.decodeJwtPayload(token);
+      const payload = authService.decodeJwtPayload(token);
       const now = Math.floor(Date.now() / 1000);
       return payload.exp > now;
     } catch (error) {
@@ -165,6 +154,22 @@ login: async (credentials) => {
       return JSON.parse(jsonPayload);
     } catch (error) {
       throw new Error('Ogiltig JWT token');
+    }
+  },
+
+  // Validera token mot backend
+  validateToken: async () => {
+    try {
+      const token = localStorage.getItem('jwt-token');
+      if (!token) throw new Error('Ingen token hittad');
+      
+      const response = await axios.post(`${API_BASE_URL}/auth/validate-token`, {
+        token: token
+      });
+      
+      return response.data.valid;
+    } catch (error) {
+      throw new Error('Token-validering misslyckades');
     }
   }
 };
