@@ -86,4 +86,15 @@ public class UserController {
             return ResponseEntity.status(500).body("Kunde inte radera användaren: " + e.getMessage());
         }
     }
+    /**
+     * Visar välkomstmeddelande för autentiserade användare.
+     * Denna endpoint kan nås av användare med antingen USER eller ADMIN-roll.
+     *
+     * @return ResponseEntity som innehåller välkomstmeddelande för användare och administratörer
+     */
+    @GetMapping  // Detta ger er /api/user
+    public ResponseEntity<String> userWelcome() {
+        return ResponseEntity.ok("Välkommen users och admins");
+    }
+
 }
