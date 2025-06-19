@@ -7,6 +7,9 @@ import se.secure.springapp.securespringapp.dto.AppUserDTO;
 import se.secure.springapp.securespringapp.model.User;
 import se.secure.springapp.securespringapp.model.UserPrincipal;
 import se.secure.springapp.securespringapp.service.UserService;
+import se.secure.springapp.securespringapp.exception.UserNotFoundException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import se.secure.springapp.securespringapp.repository.UserRepository;
 
 /**
  * Controller för användarspecifika endpoints.
@@ -17,14 +20,16 @@ import se.secure.springapp.securespringapp.service.UserService;
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     /**
      * Konstruktor för injektion av UserService.
      *
      * @param userService service för användarhantering
      */
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserRepository userRepository) {
         this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -56,18 +61,29 @@ public class UserController {
     /**
      * Tar bort den inloggade användarens konto.
      *
-     * @param auth autentiseringsobjekt från Spring Security
-     * @return HTTP 204 No Content vid lyckad borttagning
+     * @param auth autentiseringsobjekt från JWT-token
+     * @return 200 OK om lyckad radering, 404 om användaren inte finns, 500 vid fel
      */
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteOwnAccount(Authentication auth) {
-        // Hämta user ID från JWT token (sub claim)
-        String userId = auth.getName();  // Detta är "sub" från JWT (user ID)
+    public ResponseEntity<?> deleteOwnAccount(Authentication auth) {
+        try {
+            // Hämta email från JWT token
+            Jwt jwt = (Jwt) auth.getPrincipal();
+            final String email = jwt.getClaimAsString("username");
 
-        // Konvertera till Long och använd deleteById
-        Long userIdLong = Long.parseLong(userId);
-        userService.deleteUserById(userIdLong);
+            // Hitta användaren i databasen
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UserNotFoundException("Användaren hittades inte"));
 
-        return ResponseEntity.noContent().build();
+            // Radera användaren
+            userService.deleteUserById(user.getId());
+
+            return ResponseEntity.ok("Användaren " + email + " har raderats framgångsrikt");
+
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(404).body("Användaren hittades inte");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Kunde inte radera användaren: " + e.getMessage());
+        }
     }
 }

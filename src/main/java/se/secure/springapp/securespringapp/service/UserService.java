@@ -15,7 +15,7 @@ import java.util.HashSet;
 /**
  * Service som hanterar användarrelaterade operationer.
  *
- * Kombinerar Gustavs registreringslogik med Elies utökade funktionalitet.
+ * Kombinerar Gustavs registreringslogik med Elies utökade funktionalitet och Jawhars metoder för registrering
  * ÄNDRING: Tog bort UserDetailsService-implementationen för att lösa bean-konflikt.
  */
 @Service
@@ -23,7 +23,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SecurityEventLogger securityEventLogger; // * Logger för säkerhetshändelser enligt VG-krav.
+    private final SecurityEventLogger securityEventLogger; // * Logger för säkerhetshändelser
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityEventLogger securityEventLogger) {
         this.userRepository = userRepository;
@@ -32,43 +32,53 @@ public class UserService {
     }
 
     /**
-     * Registrerar ny användare med användarnamn och lösenord (Gustavs version).
+     * Registrerar ny användare
+     * Kombinerar email och username-validering med säker lösenordshantering.
+     * Loggar registreringen
+     *
+     * @param registerRequest registreringsdata från frontend
+     * @return sparad användare
+     * @throws IllegalArgumentException om användare redan finns eller samtycke saknas
      */
-    public User registerNewUser(String username, String password, boolean consentGiven) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new IllegalArgumentException("Username already exists!");
+    public User registerUser(RegisterRequest registerRequest) {
+        // Kontrollera att samtycke givits (GDPR-krav)
+        if (!registerRequest.isConsentGiven()) {
+            throw new IllegalArgumentException("Samtycke till datalagring krävs för registrering");
         }
 
+        // Kontrollera dubbletter
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            throw new IllegalArgumentException("Användarnamnet är redan taget");
+        }
+
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new IllegalArgumentException("Email-adressen är redan registrerad");
+        }
+
+        // Skapa och konfigurera ny användare
         User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setPassword(passwordEncoder.encode(password));
-        newUser.setConsentGiven(consentGiven);
-        newUser.setRoles(new HashSet<>());
+        newUser.setUsername(registerRequest.getUsername());
+        newUser.setEmail(registerRequest.getEmail());
+        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        newUser.setFullName(registerRequest.getFullName());
         newUser.addRole(Role.USER);
+        newUser.setConsentGiven(true); // Samtycke bekräftat
 
-        return userRepository.save(newUser);
-    }
+        // Spara användare
+        User savedUser = userRepository.save(newUser);
 
-    /**
-     * Registrerar ny användare Elies version.
-     */
-    public User registerUser(String username, String rawPassword) {
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Användarnamnet finns redan");
-        }
+        // Logga registrering för säkerhetsrevision
+        securityEventLogger.logUserRegistration(savedUser.getEmail());
 
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(rawPassword));
-        user.setRoles(new HashSet<>());
-        user.addRole(Role.USER);
-        user.setConsentGiven(false);
-
-        return userRepository.save(user);
+        return savedUser;
     }
 
     /**
      * Hittar användare baserat på användarnamn.
+     *
+     * @param username användarnamn att söka efter
+     * @return användare om den hittas
+     * @throws IllegalArgumentException om användaren inte finns
      */
     public User findUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -77,6 +87,8 @@ public class UserService {
 
     /**
      * Tar bort användare baserat på användarnamn.
+     *
+     * @param username användarnamn för användaren som ska tas bort
      */
     public void deleteUserByUsername(String username) {
         User user = findUserByUsername(username);
@@ -110,38 +122,5 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("Användare med ID " + id + " hittades inte."));
     }
 
-    /**
-     * Registrerar ny användare
-     * Kombinerar email och username-validering med säker lösenordshantering.
-     * Loggar registreringen
-     *
-     * @param registerRequest registreringsdata från frontend
-     * @return sparad användare
-     * @throws IllegalArgumentException om användare redan finns
-     */
-    public User registerUser(RegisterRequest registerRequest) {
-        // Kontrollera dubbletter
-        if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new IllegalArgumentException("Användarnamnet är redan taget");
-        }
 
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new IllegalArgumentException("Email-adressen är redan registrerad");
-        }
-
-        // Skapa och spara användare
-        User newUser = new User();
-        newUser.setUsername(registerRequest.getUsername());
-        newUser.setEmail(registerRequest.getEmail());
-        newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        newUser.setFullName(registerRequest.getFullName());
-        newUser.addRole(Role.USER);
-        newUser.setConsentGiven(false);
-
-        User savedUser = userRepository.save(newUser);
-
-        // Loggar registrering
-        securityEventLogger.logUserRegistration(savedUser.getEmail());
-        return savedUser;
-    }
 }
