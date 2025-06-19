@@ -34,7 +34,7 @@ import org.springframework.context.annotation.Configuration;
         type = SecuritySchemeType.HTTP,         // HTTP-baserad auth
         scheme = "bearer",                      // Bearer token format
         bearerFormat = "JWT",                   // Specificerar JWT format
-        description = "JWT Bearer token från /api/auth/login endpoint. Klistra bara in token (utan 'Bearer ' prefix)."
+        description = "JWT Bearer token från /api/auth/login endpoint. Klistra bara in token (utan 'Bearer ' prefix) Om hänglåser går från upplåst till låst så är din token validerad korrekt."
 )
 public class OpenApiConfig {
 

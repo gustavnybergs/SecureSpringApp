@@ -75,4 +75,16 @@ public class AdminController {
         adminService.deleteUserById(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Visar välkomstmeddelande för administratörer.
+     * Denna endpoint kan endast nås av användare med ADMIN-roll.
+     *
+     * @return ResponseEntity som innehåller välkomstmeddelande för administratörer
+     */
+    @GetMapping  // Detta ger er /api/admin
+    public ResponseEntity<String> adminWelcome() {
+        return ResponseEntity.ok("Välkommen admin");
+    }
+
 }
