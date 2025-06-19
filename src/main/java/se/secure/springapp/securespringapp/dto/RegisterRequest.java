@@ -1,15 +1,12 @@
 package se.secure.springapp.securespringapp.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import jakarta.validation.constraints.Pattern;
 
 /**
  * Request DTO för användarregistrering via REST API.
@@ -58,4 +55,13 @@ public class RegisterRequest {
     @Size(min = 2, max = 100, message = "Fullständigt namn måste vara mellan 2 och 100 tecken")
     @Schema(description = "Användarens fullständiga namn", example = "Anna Andersson", requiredMode = Schema.RequiredMode.REQUIRED)
     private String fullName;
+
+    @NotNull(message = "Samtycke till datalagring är obligatoriskt")
+    @Schema(
+            description = "Samtycke till datalagring enligt GDPR. MÅSTE vara 'true' för att registrering ska lyckas.",
+            example = "true",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            allowableValues = {"true"}
+    )
+    private boolean consentGiven;
 }
